@@ -1,0 +1,597 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123c55">
+  <title>بوابة مدرسة السويح الرقمية</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --navy: #123c55;
+      --teal: #168b91;
+      --mint: #e7f7f3;
+      --blue: #edf5ff;
+      --text: #203746;
+      --muted: #718391;
+      --white: #ffffff;
+      --border: #e5edf1;
+      --shadow: 0 10px 28px rgba(18, 60, 85, .07);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Cairo", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at top right, #dff6f1 0, transparent 38%),
+        linear-gradient(145deg, #f5f9fc, #eef5f8);
+    }
+
+    button, input { font: inherit; }
+
+    .container {
+      width: min(1120px, 92%);
+      margin: auto;
+    }
+
+    header {
+      padding: 30px 0 25px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .logo {
+      width: 76px;
+      height: 76px;
+      object-fit: contain;
+      background: white;
+      padding: 7px;
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .school-name {
+      margin: 0;
+      color: var(--navy);
+      font-size: clamp(21px, 4vw, 32px);
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 35px;
+      color: white;
+      border-radius: 27px;
+      background: linear-gradient(125deg, #123c55, #176d78);
+      box-shadow: 0 18px 40px rgba(18, 60, 85, .16);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 230px;
+      height: 230px;
+      left: -65px;
+      top: -95px;
+      border: 35px solid rgba(255,255,255,.07);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero h2 {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 10px;
+      font-size: clamp(23px, 4vw, 34px);
+    }
+
+    .hero p {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      color: #d8edf0;
+      line-height: 1.9;
+      max-width: 680px;
+    }
+
+    .search-area {
+      display: flex;
+      gap: 12px;
+      margin: 25px 0 20px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 15px 48px 15px 16px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      background: white;
+      outline: none;
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    .search-box input:focus {
+      border-color: var(--teal);
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 17px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 20px;
+    }
+
+    .refresh-button {
+      border: 0;
+      padding: 12px 20px;
+      border-radius: 15px;
+      color: white;
+      background: var(--teal);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .refresh-button:hover { filter: brightness(.95); }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 30px 0 16px;
+    }
+
+    .section-heading h3 {
+      margin: 0;
+      font-size: 21px;
+      color: var(--navy);
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-bottom: 20px;
+    }
+
+    .category-button {
+      padding: 9px 17px;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      background: white;
+      color: #536b79;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .category-button.active,
+    .category-button:hover {
+      color: white;
+      background: var(--navy);
+      border-color: var(--navy);
+    }
+
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+      gap: 16px;
+    }
+
+    .link-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 112px;
+      padding: 19px;
+      border: 1px solid rgba(226, 236, 241, .9);
+      border-radius: 20px;
+      background: rgba(255,255,255,.94);
+      box-shadow: var(--shadow);
+      text-decoration: none;
+      color: inherit;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .link-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 30px rgba(18, 60, 85, .12);
+    }
+
+    .link-icon {
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      width: 55px;
+      height: 55px;
+      border-radius: 17px;
+      background: var(--mint);
+      color: var(--teal);
+      font-size: 25px;
+    }
+
+    .link-info { min-width: 0; }
+
+    .link-info h4 {
+      margin: 0 0 5px;
+      font-size: 16px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .link-info p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .arrow {
+      margin-right: auto;
+      color: #9aadb8;
+      font-size: 20px;
+    }
+
+    .message {
+      text-align: center;
+      padding: 35px 15px;
+      border: 1px dashed #c9dbe3;
+      border-radius: 20px;
+      background: rgba(255,255,255,.7);
+      color: var(--muted);
+      line-height: 1.9;
+      grid-column: 1 / -1;
+    }
+
+    .message strong {
+      display: block;
+      color: var(--navy);
+      font-size: 17px;
+      margin-bottom: 5px;
+    }
+
+    .error-text { color: #b45353; }
+
+    footer {
+      text-align: center;
+      padding: 35px 12px 25px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 2;
+    }
+
+    footer strong { color: var(--navy); }
+
+    @media (max-width: 600px) {
+      header { padding-top: 20px; }
+      .logo { width: 60px; height: 60px; border-radius: 17px; }
+      .brand { gap: 12px; }
+      .hero { padding: 25px 21px; border-radius: 22px; }
+      .links-grid { grid-template-columns: 1fr; gap: 12px; }
+      .link-card { min-height: 95px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container brand">
+      <img
+        class="logo"
+        src=<img src="https://l.top4top.io/p_39552vjkg1.png" alt="شعار مدرسة السويح">
+        alt="شعار مدرسة السويح"
+        onerror="this.style.display='none'"
+      >
+      <div>
+        <h1 class="school-name">بوابة مدرسة السويح الرقمية</h1>
+        <p class="subtitle">بوابتك للوصول إلى الخدمات والمنصات المدرسية</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h2>مرحبًا بكم في مدرستنا</h2>
+      <p>
+        من هنا يمكنكم الوصول بسهولة إلى المواقع والخدمات الرقمية
+        والمبادرات والأعمال المدرسية.
+      </p>
+    </section>
+
+    <div class="search-area">
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="ابحث عن موقع أو خدمة مدرسية..."
+          aria-label="البحث عن الروابط"
+        >
+      </div>
+      <button class="refresh-button" id="refreshButton" type="button">
+        ↻ تحديث الروابط
+      </button>
+    </div>
+
+    <div class="section-heading">
+      <h3>الخدمات والمنصات المدرسية</h3>
+      <span class="count" id="linkCount">جارٍ التحميل...</span>
+    </div>
+
+    <nav class="categories" id="categories" aria-label="تصنيف الروابط"></nav>
+
+    <section class="links-grid" id="linksGrid" aria-live="polite">
+      <div class="message">
+        <strong>جارٍ تحميل الروابط</strong>
+        يرجى الانتظار قليلًا...
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <strong>مدرسة السويح للصفوف (1–10)</strong>
+    <br>
+    بوابة رقمية لخدمة المجتمع المدرسي
+    <br>
+    تصميم نوال ناجم الغنبوصي | إشراف الأستاذة شغيلة العلوية
+  </footer>
+
+  <script>
+    // إعدادات Supabase نفسها الموجودة في admin.html
+    const SUPABASE_URL = "https://nhnefroyunvbumazqrfb.supabase.co";
+
+    // مفتاح النشر العام publishable key، وليس مفتاح service_role السري.
+    const SUPABASE_PUBLISHABLE_KEY = "ضع_هنا_نفس_مفتاح_publishable_الموجود_في_admin.html";
+
+    const grid = document.getElementById("linksGrid");
+    const categoriesElement = document.getElementById("categories");
+    const searchInput = document.getElementById("searchInput");
+    const linkCount = document.getElementById("linkCount");
+    const refreshButton = document.getElementById("refreshButton");
+
+    let allLinks = [];
+    let selectedCategory = "الكل";
+
+    const icons = {
+      globe: "🌐",
+      book: "📚",
+      calendar: "📅",
+      chart: "📊",
+      school: "🏫",
+      users: "👥",
+      file: "📄",
+      image: "🖼️",
+      link: "🔗",
+      star: "⭐",
+      award: "🏆",
+      heart: "💚",
+      laptop: "💻",
+      folder: "📁",
+      clipboard: "📋"
+    };
+
+    function showMessage(title, description, isError = false) {
+      grid.innerHTML = "";
+
+      const message = document.createElement("div");
+      message.className = "message" + (isError ? " error-text" : "");
+
+      const heading = document.createElement("strong");
+      heading.textContent = title;
+
+      const details = document.createElement("div");
+      details.textContent = description;
+
+      message.append(heading, details);
+      grid.appendChild(message);
+    }
+
+    function getIcon(iconName) {
+      return icons[iconName] || "🔗";
+    }
+
+    function safeUrl(value) {
+      try {
+        const url = new URL(value);
+        if (url.protocol === "https:" || url.protocol === "http:") {
+          return url.href;
+        }
+      } catch (error) {}
+      return null;
+    }
+
+    function getCategories() {
+      const values = [
+        "الكل",
+        ...new Set(allLinks.map(link => link.category || "عام"))
+      ];
+
+      categoriesElement.innerHTML = "";
+
+      values.forEach(category => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className =
+          "category-button" +
+          (category === selectedCategory ? " active" : "");
+        button.textContent = category;
+
+        button.addEventListener("click", () => {
+          selectedCategory = category;
+          getCategories();
+          renderLinks();
+        });
+
+        categoriesElement.appendChild(button);
+      });
+    }
+
+    function renderLinks() {
+      const term = searchInput.value.trim().toLowerCase();
+
+      const filtered = allLinks.filter(link => {
+        const title = (link.title || "").toLowerCase();
+        const category = (link.category || "عام").toLowerCase();
+
+        const matchesSearch =
+          title.includes(term) || category.includes(term);
+
+        const matchesCategory =
+          selectedCategory === "الكل" ||
+          (link.category || "عام") === selectedCategory;
+
+        return matchesSearch && matchesCategory;
+      });
+
+      linkCount.textContent = `عدد الروابط: ${filtered.length}`;
+      grid.innerHTML = "";
+
+      if (filtered.length === 0) {
+        showMessage(
+          "لا توجد روابط لعرضها",
+          allLinks.length
+            ? "جرّبي البحث بكلمة أخرى أو اختاري تصنيفًا مختلفًا."
+            : "ستظهر الروابط هنا بعد إضافتها وتفعيلها من لوحة التحكم."
+        );
+        return;
+      }
+
+      filtered.forEach(link => {
+        const url = safeUrl(link.url);
+
+        // لا نعرض الروابط غير الصالحة.
+        if (!url) return;
+
+        const card = document.createElement("a");
+        card.className = "link-card";
+        card.href = url;
+        card.target = "_blank";
+        card.rel = "noopener noreferrer";
+
+        const icon = document.createElement("div");
+        icon.className = "link-icon";
+        icon.textContent = getIcon(link.icon);
+
+        const info = document.createElement("div");
+        info.className = "link-info";
+
+        const title = document.createElement("h4");
+        title.textContent = link.title || "خدمة مدرسية";
+
+        const category = document.createElement("p");
+        category.textContent = link.category || "عام";
+
+        const arrow = document.createElement("span");
+        arrow.className = "arrow";
+        arrow.textContent = "↗";
+        arrow.setAttribute("aria-hidden", "true");
+
+        info.append(title, category);
+        card.append(icon, info, arrow);
+        grid.appendChild(card);
+      });
+
+      if (!grid.children.length) {
+        showMessage(
+          "تعذّر عرض الروابط",
+          "تحققي من صحة عناوين الروابط في لوحة التحكم."
+        );
+      }
+    }
+
+    async function loadLinks() {
+      refreshButton.disabled = true;
+      refreshButton.textContent = "جارٍ التحديث...";
+
+      showMessage("جارٍ تحميل الروابط", "يرجى الانتظار قليلًا...");
+
+      try {
+        if (
+          !window.supabase ||
+          !SUPABASE_PUBLISHABLE_KEY ||
+          SUPABASE_PUBLISHABLE_KEY.includes("ضع_هنا")
+        ) {
+          throw new Error("لم يتم إعداد مفتاح Supabase في ملف portal.html.");
+        }
+
+        const client = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_PUBLISHABLE_KEY
+        );
+
+        const { data, error } = await client
+          .from("portal_links")
+          .select("id,title,url,category,icon,sort_order,is_active")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true });
+
+        if (error) throw error;
+
+        allLinks = data || [];
+        selectedCategory = "الكل";
+        getCategories();
+        renderLinks();
+
+        if (allLinks.length === 0) {
+          showMessage(
+            "أهلًا بكم في بوابة مدرسة السويح",
+            "لا توجد روابط مفعّلة حاليًا. يمكن إضافتها من لوحة التحكم."
+          );
+          linkCount.textContent = "عدد الروابط: 0";
+        }
+      } catch (error) {
+        console.error("Portal loading error:", error);
+        showMessage(
+          "تعذّر تحميل الروابط",
+          "تحققي من اتصال الإنترنت ومفتاح Supabase وسياسات قراءة الروابط.",
+          true
+        );
+        linkCount.textContent = "تعذّر التحميل";
+      } finally {
+        refreshButton.disabled = false;
+        refreshButton.textContent = "↻ تحديث الروابط";
+      }
+    }
+
+    searchInput.addEventListener("input", renderLinks);
+    refreshButton.addEventListener("click", loadLinks);
+
+    loadLinks();
+  </script>
+</body>
+</html>

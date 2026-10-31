@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#eaf6ff">
+<title>بوابة مدرسة السويح الرقمية</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+  --blue:#1769c2;
+  --blue2:#3d9ce9;
+  --teal:#16b6b0;
+  --mint:#d9f7ef;
+  --purple:#8271df;
+  --orange:#ffb85c;
+  --ink:#123e78;
+  --muted:#6485a7;
+  --white:#fff;
+  --bg:#eaf5ff;
+  --line:#d8eafa;
+  --shadow:0 5px 18px rgba(41,103,165,.09);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:"Cairo",sans-serif;
+  color:var(--ink);
+  background:linear-gradient(135deg,#e7f4ff,#f6fbff 55%,#e3f8f5);
+  min-height:100vh;
+}
+
+button,a{font:inherit}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer}
+
+.page{max-width:1800px;margin:auto;padding:18px}
+
+.dashboard{
+  background:rgba(255,255,255,.82);
+  border:1px solid #d6e9fb;
+  border-radius:27px;
+  box-shadow:0 14px 45px rgba(28,90,145,.12);
+  overflow:hidden;
+}
+
+.header{
+  min-height:112px;
+  padding:18px 24px;
+  display:grid;
+  grid-template-columns:1fr 1.5fr 1fr;
+  align-items:center;
+  gap:20px;
+  background:linear-gradient(110deg,#f8fcff,#e4f3ff,#f4fffd);
+  border-bottom:1px solid var(--line);
+  position:relative;
+}
+
+.header:after{
+  content:"";
+  position:absolute;
+  bottom:-1px;
+  right:0;
+  width:100%;
+  height:5px;
+  background:linear-gradient(90deg,var(--purple),var(--blue2),var(--teal));
+  opacity:.45;
+}
+
+.date-box{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  background:white;
+  border:1px solid #cfe5fb;
+  border-radius:18px;
+  padding:12px 15px;
+  box-shadow:var(--shadow);
+  min-width:0;
+}
+
+.date-box .date-icon{color:var(--blue);width:26px;height:26px}
+.date-text{font-size:13px;line-height:1.8;text-align:center}
+.date-text strong{display:block;font-size:15px}
+.clock{font-size:14px;font-weight:700;white-space:nowrap}
+
+.brand{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:15px;
+  text-align:center;
+}
+
+.brand-symbol{
+  width:66px;
+  height:66px;
+  flex-shrink:0;
+  border-radius:22px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(145deg,#dff7f0,#dceaff);
+  color:var(--teal);
+}
+
+.brand-symbol i{width:37px;height:37px}
+.brand h1{font-size:clamp(20px,2.1vw,31px);margin:0;font-weight:800}
+.brand p{margin:3px 0 0;font-size:13px;color:#4d7ea9}
+
+.school{
+  text-align:left;
+  border-right:1px solid #b8d6f1;
+  padding-right:18px;
+}
+
+.school strong{font-size:20px;display:block}
+.school span{font-size:13px;color:var(--muted)}
+
+.main{
+  display:grid;
+  grid-template-columns:205px minmax(0,1fr) 170px;
+  gap:14px;
+  padding:16px;
+}
+
+.sidebar{display:flex;flex-direction:column;gap:10px}
+
+.side-link{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px 14px;
+  border-radius:15px;
+  border:1px solid transparent;
+  font-size:14px;
+  font-weight:700;
+  transition:.2s;
+}
+
+.side-link i{width:24px;height:24px;flex-shrink:0}
+.side-link:hover{transform:translateX(-3px);border-color:#b8daf6;filter:saturate(1.15)}
+.side-link.active{box-shadow:var(--shadow);border-color:#a7d7fa}
+
+.c-blue{background:#d9edff;color:#1769c2}
+.c-teal{background:#d9f7ef;color:#078e83}
+.c-purple{background:#eee5ff;color:#7256ca}
+.c-orange{background:#fff0d8;color:#b56c12}
+.c-mint{background:#dff8f4;color:#168f9b}
+
+.center{min-width:0}
+
+.top-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.7fr) minmax(165px,.9fr) minmax(165px,.9fr);
+  gap:12px;
+  align-items:stretch;
+}
+
+.card{
+  background:#fff;
+  border:1px solid #d9eafa;
+  border-radius:19px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  min-width:0;
+}
+
+.hero{
+  min-height:285px;
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  background:
+    linear-gradient(0deg,rgba(5,53,112,.83),transparent 64%),
+    url("https://l.top4top.io/p_39552vjkg1.png") center/cover;
+  color:white;
+}
+
+.hero-content{padding:22px;width:100%;position:relative;z-index:1}
+.hero h2{font-size:clamp(22px,2.4vw,35px);line-height:1.7;margin:0 0 8px;text-shadow:0 2px 8px #15385b}
+.hero p{margin:0;font-size:14px}
+
+.hero-label{
+  display:inline-flex;
+  margin-top:12px;
+  padding:7px 13px;
+  background:rgba(255,255,255,.19);
+  border:1px solid #ffffff60;
+  border-radius:11px;
+  font-size:13px;
+  backdrop-filter:blur(5px);
+}
+
+.card-heading{
+  background:linear-gradient(90deg,#2188d4,#1467b3);
+  color:#fff;
+  padding:12px 13px;
+  font-size:14px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+}
+
+.card-heading i{width:19px;height:19px}
+
+/* بطاقة إنجازات المدرسة المتحركة */
+
+.achievement-card{
+  display:flex;
+  flex-direction:column;
+  min-height:285px;
+  background:#fff;
+}
+
+.achievement-heading{
+  background:linear-gradient(100deg,#8068d7,#5d83d7,#258fc9);
+  color:#fff;
+  padding:12px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-size:14px;
+  font-weight:800;
+  flex-shrink:0;
+}
+
+.achievement-heading-title{display:flex;align-items:center;gap:8px}
+.achievement-heading-title i{width:20px;height:20px}
+
+.achievement-counter{
+  background:rgba(255,255,255,.2);
+  border:1px solid rgba(255,255,255,.35);
+  border-radius:20px;
+  padding:3px 9px;
+  font-size:10px;
+  white-space:nowrap;
+}
+
+.achievement-content{
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  padding:10px;
+  gap:8px;
+}
+
+.achievement-image-wrap{
+  position:relative;
+  width:100%;
+  height:125px;
+  min-height:125px;
+  border-radius:13px;
+  overflow:hidden;
+  background:linear-gradient(135deg,#e4f2ff,#e0f8f1);
+  display:grid;
+  place-items:center;
+}
+
+.achievement-image{display:block;width:100%;height:100%;object-fit:cover;transition:opacity .35s ease,transform .5s ease}
+.achievement-image.is-changing{opacity:.25;transform:scale(1.03)}
+
+.achievement-image-fallback{
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:7px;
+  color:#6d8eb1;
+  background:linear-gradient(135deg,#e7f3ff,#e4f8f2);
+  font-size:11px;
+  font-weight:700;
+}
+
+.achievement-image-fallback i{width:35px;height:35px;color:#4b9bc8}
+.achievement-image-fallback.visible{display:flex}
+
+.achievement-details{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+
+.achievement-title{
+  color:#185b9c;
+  font-size:14px;
+  line-height:1.7;
+  font-weight:800;
+  margin:0;
+  overflow-wrap:anywhere;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  min-height:24px;
+}
+
+.achievement-description{
+  color:#63809c;
+  font-size:11px;
+  line-height:1.8;
+  margin:0;
+  overflow-wrap:anywhere;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  min-height:20px;
+}
+
+.achievement-date{display:flex;align-items:center;gap:5px;color:#8299ae;font-size:10px;margin-top:auto}
+.achievement-date i{width:14px;height:14px}
+
+.achievement-indicators{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:12px;
+  padding-top:2px;
+}
+
+.achievement-indicator{
+  width:7px;
+  height:7px;
+  border:0;
+  border-radius:20px;
+  padding:0;
+  background:#cbddeb;
+  transition:width .25s ease,background .25s ease;
+  cursor:default;
+}
+
+.achievement-indicator.active{width:20px;background:#398fd0}
+
+.achievement-empty{
+  min-height:220px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:9px;
+  padding:15px;
+  text-align:center;
+  color:#7895af;
+  font-size:12px;
+}
+
+.achievement-empty i{width:37px;height:37px;color:#83b5d9}
+
+.achievement-fade{animation:achievementFade .5s ease}
+
+@keyframes achievementFade{
+  from{opacity:.35;transform:translateY(5px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.stats-list{padding:11px;display:flex;flex-direction:column;gap:10px}
+.stat{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:10px;border-radius:14px;background:#eef7ff}
+.stat:nth-child(2){background:#edf5ff}
+.stat:nth-child(3){background:#e5faf5}
+.stat-name{font-size:12px;font-weight:700}
+.stat-num{font-size:21px;font-weight:800;color:#1769b5}
+.stat-icon{display:grid;place-items:center;width:39px;height:39px;border-radius:50%;background:white;color:var(--orange);flex-shrink:0}
+.stat-icon i{width:22px;height:22px}
+
+.attendance{padding-bottom:12px}
+.ring-wrap{display:grid;place-items:center;padding:15px 8px 10px}
+
+.ring{
+  width:125px;
+  height:125px;
+  border-radius:50%;
+  background:conic-gradient(var(--teal) 0 0%,#e1f2ed 0% 100%);
+  display:grid;
+  place-items:center;
+  position:relative;
+}
+
+.ring:before{content:"";position:absolute;inset:12px;border-radius:50%;background:white}
+.ring-inner{z-index:1;text-align:center}
+.ring-inner strong{font-size:26px;display:block;color:#087e84}
+.ring-inner span{font-size:11px}
+.attendance-caption{text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:5px 8px 8px}
+.attendance-status{text-align:center;font-size:10px;color:#7896ae;min-height:16px;padding:0 8px}
+
+.lower-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+
+.info-card{padding:15px 12px;min-height:170px;text-align:center}
+.info-card .big-icon{width:32px;height:32px;margin:0 auto 5px}
+.info-card h3{font-size:15px;margin:3px 0 8px}
+.info-card p{font-size:12px;line-height:1.9;margin:0;color:#315d87}
+.info-card.purple{background:linear-gradient(145deg,#f3edff,#e7e0ff)}
+.info-card.mint{background:linear-gradient(145deg,#e6fbf6,#d7f4ec)}
+.info-card.blue{background:linear-gradient(145deg,#edf7ff,#ddecff)}
+.info-card.peach{background:linear-gradient(145deg,#fff7eb,#ffe8d3)}
+
+/* بطاقة حديث اليوم */
+
+#todayEventCard{transition:background .4s ease,color .4s ease}
+
+#todayEventCard.event-today{background:#922b36 !important;border-color:#922b36;color:#fff}
+
+#todayEventCard.event-today h3,
+#todayEventCard.event-today p,
+#todayEventCard.event-today #todayEvent,
+#todayEventCard.event-today #eventDate,
+#todayEventCard.event-today i{color:#fff !important}
+
+#todayEventCard.event-previous{background:linear-gradient(145deg,#f4f8fc,#e8f0f8) !important;border-color:#d9eafa;color:#111}
+
+#todayEventCard.event-previous h3,
+#todayEventCard.event-previous p,
+#todayEventCard.event-previous #todayEvent,
+#todayEventCard.event-previous #eventDate,
+#todayEventCard.event-previous i{color:#111 !important}
+
+#todayEvent{min-height:48px;overflow-wrap:anywhere}
+
+.feature-image{
+  min-height:170px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  text-align:center;
+  padding:15px;
+  color:white;
+  background:
+    linear-gradient(0deg,#164c83dc,transparent 80%),
+    url("https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=500&q=80") center/cover;
+}
+
+.feature-image h3{font-size:19px;margin:0}
+
+.qr-panel{padding:12px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.qr-panel h3{font-size:16px;margin:0}
+.qr-panel p{font-size:11px;line-height:1.8;margin:0;color:var(--muted)}
+.qr-panel img{width:120px;height:120px;max-width:100%;border:6px solid white;box-shadow:0 0 0 1px var(--line);border-radius:9px}
+.qr-note{font-size:11px;color:var(--teal);font-weight:800}
+
+.footer{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  align-items:center;
+  gap:8px;
+  margin:0 16px 16px;
+  padding:17px 12px;
+  border:1px solid #e2e9fb;
+  border-radius:25px;
+  background:linear-gradient(100deg,#fff,#f3f8ff,#fff8f1);
+}
+
+.benefit{text-align:center;padding:5px 8px;min-width:0}
+.benefit+.benefit{border-right:1px solid #c5d9ee}
+.benefit i{width:29px;height:29px;color:var(--teal);margin-bottom:4px}
+.benefit strong{display:block;font-size:12px;line-height:1.8}
+
+.footer-tag{
+  background:linear-gradient(120deg,#8b6bdd,#6c55b6);
+  color:white;
+  border-radius:30px;
+  padding:10px;
+  font-weight:800;
+}
+
+.motto{text-align:center;color:#235f9c;font-weight:700;padding:0 12px 17px;font-size:15px}
+.motto span{color:var(--teal);padding:0 8px}
+.small-note{text-align:center;color:#7793ad;font-size:10px;padding-bottom:10px}
+
+/* قسم الطلاب والطالبات */
+
+.students-view{display:none}
+.students-view.visible{display:block}
+.home-view.hidden{display:none}
+
+.students-header{
+  padding:17px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:linear-gradient(110deg,#f1f9ff,#e4f5ff,#effcf9);
+  border:1px solid #d7eafa;
+  border-radius:20px;
+  margin-bottom:14px;
+}
+
+.students-header h2{margin:0;font-size:21px;color:#1769b5}
+.students-header p{margin:3px 0 0;color:#6485a7;font-size:12px}
+
+.back-home{border:0;border-radius:12px;padding:9px 15px;background:#1769c2;color:#fff;font-weight:700}
+
+.students-report{
+  max-width:780px;
+  margin:15px auto;
+  padding:20px;
+  border-radius:24px;
+  background:#fff;
+  border:1px solid #d8eafa;
+  box-shadow:var(--shadow);
+}
+
+.report-title{text-align:center;margin-bottom:18px}
+.report-title .report-mark{font-size:25px;color:#20aaa8}
+.report-title h2{font-size:22px;color:#1769b5;margin:3px 0}
+.report-title p{font-size:12px;color:#6485a7;margin:0}
+
+.student-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+
+.student-card{
+  min-height:170px;
+  padding:15px 8px;
+  border-radius:19px;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border:1px solid transparent;
+}
+
+.student-card .student-icon{width:45px;height:45px;margin-bottom:8px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.65)}
+.student-card .student-icon i{width:29px;height:29px}
+.student-card .student-label{font-size:13px;font-weight:800;line-height:1.8}
+.student-card .student-sub{font-size:11px;margin-top:1px}
+.student-card strong{font-size:31px;line-height:1.5;margin-top:5px}
+
+.student-male{background:#e0f3ff;border-color:#c8e8fb;color:#1268ad}
+.student-female-one{background:#fff0f4;border-color:#f9dce7;color:#ad3268}
+.student-female-two{background:#f0edff;border-color:#dfd8ff;color:#7156c5}
+
+.students-total{
+  margin-top:12px;
+  padding:15px 18px;
+  border-radius:18px;
+  background:linear-gradient(100deg,#def9f5,#e2fbf7);
+  border:1px solid #c9f0e9;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  color:#078c89;
+  text-align:center;
+}
+
+.students-total i{width:42px;height:42px}
+.students-total span{display:block;font-size:13px;font-weight:800}
+.students-total strong{display:block;font-size:29px;line-height:1.5}
+.students-footnote{text-align:center;color:#7793ad;font-size:11px;margin-top:12px}
+
+/* قسم البحوث الإجرائية */
+
+.research-view{display:none}
+.research-view.visible{display:block}
+
+.research-frame-card{
+  background:#fff;
+  border:1px solid #d8eafa;
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  padding:10px;
+  overflow:hidden;
+}
+
+.research-frame{display:block;width:100%;height:75vh;min-height:520px;border:0;border-radius:13px;background:#f5faff}
+
+.research-open-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-top:12px;
+  padding:10px 16px;
+  background:#e4f3ff;
+  color:#1769c2;
+  border:1px solid #cce5fa;
+  border-radius:12px;
+  font-size:13px;
+  font-weight:800;
+}
+
+.research-open-link i{width:18px;height:18px}
+
+/* =========================================
+   قسم نسب الإتقان - الصورتان
+   ========================================= */
+
+.reports-view{display:none}
+.reports-view.visible{display:block}
+
+.mastery-header{
+  padding:20px 22px;
+  margin-bottom:15px;
+  border-radius:20px;
+  border:1px solid #d8eafa;
+  background:linear-gradient(110deg,#f1f9ff,#e4f5ff,#effcf9);
+}
+
+.mastery-header h2{
+  margin:0;
+  color:#1769b5;
+  font-size:22px;
+}
+
+.mastery-header p{
+  margin:5px 0 0;
+  color:#6485a7;
+  font-size:13px;
+  line-height:1.9;
+}
+
+.mastery-gallery{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+}
+
+.mastery-photo-card{
+  background:#fff;
+  border:1px solid #d9eafa;
+  border-radius:19px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  padding:12px;
+  cursor:zoom-in;
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+
+.mastery-photo-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 28px rgba(41,103,165,.15);
+}
+
+.mastery-photo-frame{
+  width:100%;
+  height:340px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#f1f8ff,#f4fbfa);
+  border-radius:13px;
+  overflow:hidden;
+}
+
+.mastery-photo-frame img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+
+.mastery-photo-caption{
+  padding:12px 5px 4px;
+  text-align:center;
+}
+
+.mastery-photo-caption h3{
+  margin:0;
+  color:#185b9c;
+  font-size:15px;
+}
+
+.mastery-photo-caption p{
+  margin:4px 0 0;
+  color:#7895af;
+  font-size:11px;
+}
+
+.mastery-open-hint{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:6px;
+  color:#3188c6;
+  font-size:11px;
+  font-weight:700;
+  margin-top:8px;
+}
+
+.mastery-open-hint i{width:15px;height:15px}
+
+/* نافذة تكبير الصور داخل الصفحة */
+
+.mastery-viewer{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  background:rgba(8,25,46,.93);
+  padding:65px 20px 20px;
+  align-items:center;
+  justify-content:center;
+}
+
+.mastery-viewer.open{display:flex}
+
+.mastery-viewer-content{
+  width:min(1200px,100%);
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+}
+
+.mastery-viewer-title{
+  color:#fff;
+  font-size:16px;
+  font-weight:800;
+  text-align:center;
+  margin:0;
+}
+
+.mastery-viewer-image{
+  display:block;
+  max-width:100%;
+  max-height:calc(100% - 45px);
+  object-fit:contain;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 10px 40px rgba(0,0,0,.3);
+}
+
+.mastery-viewer-close{
+  position:absolute;
+  top:13px;
+  left:18px;
+  width:43px;
+  height:43px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.3);
+  border-radius:50%;
+  background:#fff;
+  color:#24517a;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+}
+
+.mastery-viewer-close:hover{background:#e8f5ff}
+
+@media(min-width:1500px){
+  .page{padding:25px}
+  .main{grid-template-columns:225px minmax(0,1fr) 185px;gap:16px;padding:20px}
+  .top-grid,.lower-grid{gap:14px}
+  .hero{min-height:330px}
+  .info-card{min-height:185px;padding:19px 14px}
+  .side-link{padding:15px;font-size:15px}
+}
+
+@media(max-width:1050px){
+  .header{grid-template-columns:1fr 1.5fr}
+  .school{display:none}
+  .main{grid-template-columns:175px minmax(0,1fr)}
+  .qr-side{grid-column:1/-1}
+  .qr-side .qr-panel{flex-direction:row;justify-content:center}
+  .qr-panel img{width:85px;height:85px}
+  .top-grid{grid-template-columns:minmax(0,1.4fr) minmax(155px,1fr)}
+  .attendance{grid-column:1/-1}
+  .attendance .ring-wrap{padding:8px}
+  .attendance .ring{width:95px;height:95px}
+  .attendance .ring:before{inset:9px}
+  .attendance .ring-inner strong{font-size:20px}
+  .attendance{display:grid;grid-template-columns:1fr 1fr;align-items:center}
+  .attendance .card-heading{grid-column:1/-1}
+  .lower-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media(max-width:650px){
+  .page{padding:7px}
+  .dashboard{border-radius:18px}
+  .header{padding:12px;grid-template-columns:1fr;gap:10px}
+  .brand{grid-row:1}
+  .brand-symbol{width:48px;height:48px;border-radius:15px}
+  .brand-symbol i{width:28px;height:28px}
+  .brand h1{font-size:20px}
+  .brand p{font-size:11px}
+  .date-box{justify-self:center;width:100%;max-width:330px}
+  .main{display:flex;flex-direction:column;padding:10px}
+  .sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .side-link{font-size:12px;padding:10px;gap:7px}
+  .side-link i{width:20px;height:20px}
+  .top-grid{grid-template-columns:1fr}
+  .hero{min-height:245px}
+  .attendance{grid-column:auto}
+  .lower-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .info-card{min-height:160px;padding:12px 8px}
+  .footer{grid-template-columns:repeat(2,minmax(0,1fr));margin:0 10px 10px;padding:10px}
+  .benefit{border:0!important}
+  .benefit:last-child{grid-column:1/-1}
+  .qr-side .qr-panel{flex-direction:column}
+  .motto{font-size:12px}
+  .students-report{padding:12px}
+  .student-cards{gap:6px}
+  .student-card{min-height:145px;padding:10px 4px}
+  .student-card .student-label{font-size:11px}
+  .student-card .student-sub{font-size:10px}
+  .student-card strong{font-size:25px}
+  .student-card .student-icon{width:38px;height:38px}
+  .student-card .student-icon i{width:25px;height:25px}
+  .students-header{padding:12px}
+  .students-header h2{font-size:17px}
+  .back-home{padding:8px 10px;font-size:12px}
+  .research-frame{height:70vh;min-height:450px}
+  .achievement-card{min-height:330px}
+  .achievement-image-wrap{height:155px;min-height:155px}
+  .achievement-title{font-size:15px}
+  .achievement-description{font-size:12px}
+
+  .mastery-header{padding:15px}
+  .mastery-header h2{font-size:19px}
+  .mastery-gallery{grid-template-columns:1fr;gap:12px}
+  .mastery-photo-frame{height:270px}
+  .mastery-viewer{padding:60px 10px 12px}
+  .mastery-viewer-image{max-height:calc(100% - 40px)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+
+<body>
+<div class="page">
+<div class="dashboard">
+
+<header class="header">
+  <div class="date-box">
+    <i data-lucide="calendar-days" class="date-icon"></i>
+    <div class="date-text">
+      <strong id="dayName">الأحد</strong>
+      <span id="dateText">--/--/----</span>
+    </div>
+    <div style="height:35px;border-right:1px solid #d5e6f6"></div>
+    <div class="clock" id="clock">--:--</div>
+    <i data-lucide="clock" style="color:#3479bd;width:22px"></i>
+  </div>
+
+  <div class="brand">
+    <div class="brand-symbol">
+      <i data-lucide="book-open-check"></i>
+    </div>
+    <div>
+      <h1>بوابة مدرسة السويح الرقمية</h1>
+      <p>منصة موحدة للخدمات والمبادرات المدرسية</p>
+    </div>
+  </div>
+
+  <div class="school">
+    <strong>مدرسة السويح</strong>
+    <span>للصفوف (5–10)</span>
+  </div>
+</header>
+
+<main class="main">
+
+  <nav class="sidebar" aria-label="الأقسام الرئيسية">
+
+    <a class="side-link c-blue active" href="#home" data-view="home">
+      <i data-lucide="house"></i>
+      <span>الصفحة الرئيسية</span>
+    </a>
+
+    <a class="side-link c-teal"
+       href="https://hessaplus.github.io/2/"
+       target="_blank"
+       rel="noopener noreferrer">
+      <i data-lucide="book-open"></i>
+      <span>نظام حجز المصادر الذكي</span>
+    </a>
+
+    <a class="side-link c-purple" href="#students" data-view="students">
+      <i data-lucide="users"></i>
+      <span>الطلاب والطالبات</span>
+    </a>
+
+    <a class="side-link c-orange" href="#research" data-view="research">
+      <i data-lucide="file-search"></i>
+      <span>البحوث الإجرائية</span>
+    </a>
+
+    <!-- زر نسب الإتقان مربوط بالقسم الجديد -->
+    <a class="side-link c-blue" href="#reports" data-view="reports">
+      <i data-lucide="chart-no-axes-combined"></i>
+      <span>نسب الإتقان</span>
+    </a>
+
+    <a class="side-link c-mint"
+       href="https://drive.google.com/drive/folders/1VmGcK6c6rO9eS8cN9L2MfwT9sA1nuskJ?usp=sharing"
+       target="_blank"
+       rel="noopener noreferrer">
+      <i data-lucide="file-check"></i>
+      <span>التوثيق الرقمي</span>
+    </a>
+
+  </nav>
+
+  <section class="center">
+
+    <!-- الصفحة الرئيسية -->
+    <div class="home-view" id="homeView">
+
+      <div class="top-grid">
+
+        <article class="card hero">
+          <div class="hero-content">
+            <h2>بالعلم ..<br>نرتقي ونبني المستقبل</h2>
+            <p>بيئة تعليمية ملهمة تصنع التميز والإبداع</p>
+            <div class="hero-label">مدرسة السويح للصفوف (5–10)</div>
+          </div>
+        </article>
+
+        <!-- بطاقة إنجازات المدرسة المرتبطة بقاعدة البيانات -->
+        <article class="card achievement-card">
+
+          <div class="achievement-heading">
+            <div class="achievement-heading-title">
+              <i data-lucide="trophy"></i>
+              <span>أبرز إنجازات المدرسة</span>
+            </div>
+
+            <span class="achievement-counter" id="achievementCounter">
+              0 / 0
+            </span>
+          </div>
+
+          <div class="achievement-content" id="achievementContent">
+
+            <div class="achievement-image-wrap" id="achievementImageWrap">
+
+              <img
+                id="achievementImage"
+                class="achievement-image"
+                src=""
+                alt="صورة الإنجاز المدرسي"
+                style="display:none"
+              >
+
+              <div
+                class="achievement-image-fallback visible"
+                id="achievementImageFallback">
+
+                <i data-lucide="award"></i>
+                <span>إنجازات مدرسة السويح</span>
+
+              </div>
+
+            </div>
+
+            <div class="achievement-details">
+
+              <h3 class="achievement-title" id="achievementTitle">
+                جارٍ تحميل الإنجازات...
+              </h3>
+
+              <p class="achievement-description" id="achievementDescription">
+                نعرض هنا أبرز إنجازات المدرسة ومبادراتها.
+              </p>
+
+              <div class="achievement-date">
+                <i data-lucide="calendar-days"></i>
+                <span id="achievementDate"> </span>
+              </div>
+
+            </div>
+
+            <div
+              class="achievement-indicators"
+              id="achievementIndicators"
+              aria-label="مؤشرات الإنجازات">
+            </div>
+
+          </div>
+
+          <div class="achievement-empty" id="achievementEmpty" style="display:none">
+            <i data-lucide="award"></i>
+            <strong>لا توجد إنجازات منشورة حاليًا</strong>
+            <span>ستظهر الإنجازات هنا عند إضافتها من لوحة الإدارة.</span>
+          </div>
+
+        </article>
+
+        <article class="card attendance">
+
+          <div class="card-heading">
+            <span>نسبة الحضور اليومي</span>
+            <i data-lucide="users"></i>
+          </div>
+
+          <div class="ring-wrap">
+            <div class="ring" id="attendanceRing">
+              <div class="ring-inner">
+                <strong id="attendanceRate">--%</strong>
+                <span>من الطلاب</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="attendance-caption">نسبة حضور الطلبة اليوم</div>
+          <div class="attendance-status" id="attendanceStatus">
+            جارٍ تحميل النسبة...
+          </div>
+
+        </article>
+
+      </div>
+
+      <div class="lower-grid">
+
+        <article class="card info-card purple">
+          <i data-lucide="book-open-text" class="big-icon" style="color:#7963d6"></i>
+          <h3>رسالة المدرسة</h3>
+          <p>
+            تسعى مدرسة السويح للتعليم الأساسي لتكوين جيل مميز أخلاقيا من زرع قيم وأخلاقيات المجتمع الاسلامي وتحصيليا من خلال طرائق تدريس حديثة، وتقنيا من خلال اكسابه المهارات التكنولوجية الحديثة، في إطار من المشاركة المجتمعية الفاعلة لتحقيق جودة وتميز في العمل المدرسي.
+          </p>
+        </article>
+
+        <article class="card info-card mint">
+          <i data-lucide="target" class="big-icon" style="color:#0ca69b"></i>
+          <h3>القيم التى تلتزم بها المدرسة</h3>
+          <p>
+            • الإتقان والجودة في العمل<br>
+            • الالتزام والانضباط.<br>
+            • الاحترام والمسؤولية.<br>
+            • التعاون والعمل بروح الفريق.<br>
+            • الأمانة والنزاهة.<br>
+            • الإبداع والابتكار.<br>
+            • المواطنة والانتماء.<br>
+            • التعلم المستمر والتطوير المهني.<br>
+            • الشراكة المجتمعية الفاعلة.
+          </p>
+        </article>
+
+        <!-- حديث اليوم المرتبط بقاعدة البيانات -->
+        <article class="card info-card blue" id="todayEventCard">
+
+          <i data-lucide="calendar-check" class="big-icon" style="color:#168ad4"></i>
+          <h3>حديث اليوم</h3>
+
+          <p id="todayEvent">
+            جارٍ تحميل الأحاديث والفعاليات...
+          </p>
+
+          <p style="margin-top:8px">
+            <i data-lucide="calendar-days" style="width:14px;vertical-align:middle"></i>
+            <span id="eventDate"></span>
+          </p>
+
+        </article>
+
+        <article class="card feature-image">
+          <div>
+            <h3>مدرستنا ..<br>حكاية نجاح</h3>
+            <p style="font-size:12px">رؤية واضحة • إنجاز مستمر</p>
+          </div>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- قسم الطلاب والطالبات -->
+    <section class="students-view" id="studentsView">
+
+      <div class="students-header">
+        <div>
+          <h2>إحصاءات الطلاب والطالبات</h2>
+          <p>أعداد الطلبة حسب الحلقات الدراسية</p>
+        </div>
+
+        <button class="back-home" type="button" id="backHome">
+          <i data-lucide="house" style="width:16px;vertical-align:middle"></i>
+          الرئيسية
+        </button>
+      </div>
+
+      <div class="students-report">
+
+        <div class="report-title">
+          <div class="report-mark"><i data-lucide="sprout"></i></div>
+          <h2>إحصاءات مدرسة السويح</h2>
+          <p>أعداد الطلبة حسب المراحل</p>
+        </div>
+
+        <div class="student-cards">
+
+          <article class="student-card student-male">
+            <div class="student-icon"><i data-lucide="user-round"></i></div>
+            <div class="student-label">الحلقة الأولى</div>
+            <div class="student-sub">(ذكور)</div>
+            <strong>171</strong>
+          </article>
+
+          <article class="student-card student-female-one">
+            <div class="student-icon"><i data-lucide="user-round"></i></div>
+            <div class="student-label">الحلقة الأولى</div>
+            <div class="student-sub">(إناث)</div>
+            <strong>163</strong>
+          </article>
+
+          <article class="student-card student-female-two">
+            <div class="student-icon"><i data-lucide="user-round"></i></div>
+            <div class="student-label">الحلقة الثانية</div>
+            <div class="student-sub">(طالبات)</div>
+            <strong>211</strong>
+          </article>
+
+        </div>
+
+        <div class="students-total">
+          <i data-lucide="users-round"></i>
+          <div>
+            <span>إجمالي طلبة المدرسة</span>
+            <strong>545</strong>
+          </div>
+        </div>
+
+        <div class="students-footnote">مدرسة السويح للصفوف (5–10)</div>
+
+      </div>
+    </section>
+
+    <!-- قسم البحوث الإجرائية -->
+    <section class="research-view" id="researchView">
+
+      <div class="students-header">
+        <div>
+          <h2>البحوث الإجرائية</h2>
+          <p>مستودع البحوث الإجرائية بمدرسة السويح</p>
+        </div>
+
+        <button class="back-home" type="button" id="backHomeResearch">
+          <i data-lucide="house" style="width:16px;vertical-align:middle"></i>
+          الرئيسية
+        </button>
+      </div>
+
+      <div class="research-frame-card">
+        <iframe
+          class="research-frame"
+          id="researchDriveFrame"
+          src="https://drive.google.com/embeddedfolderview?id=1e5IaWFrH8-s7R06FGVAasQw85PvMASgc#grid"
+          title="مجلد البحوث الإجرائية على Google Drive"
+          loading="lazy"
+          allow="autoplay">
+        </iframe>
+      </div>
+
+      <div style="text-align:center">
+        <a
+          class="research-open-link"
+          href="https://drive.google.com/drive/folders/1e5IaWFrH8-s7R06FGVAasQw85PvMASgc?usp=sharing"
+          target="_blank"
+          rel="noopener noreferrer">
+          <i data-lucide="external-link"></i>
+          فتح مجلد البحوث في Google Drive
+        </a>
+      </div>
+
+    </section>
+
+    <!-- =====================================
+         قسم نسب الإتقان الجديد
+         ===================================== -->
+    <section class="reports-view" id="reportsView">
+
+      <div class="mastery-header">
+        <h2>
+          <i data-lucide="chart-no-axes-combined"
+             style="width:23px;height:23px;vertical-align:middle"></i>
+          نسب الإتقان
+        </h2>
+        <p>
+          مؤشرات نسب الإتقان ومقارنة نتائج الصفوف والأعوام الدراسية
+          بمدرسة السويح.
+        </p>
+      </div>
+
+      <div class="mastery-gallery">
+
+        <!-- الصورة الأولى -->
+        <article
+          class="mastery-photo-card"
+          role="button"
+          tabindex="0"
+          aria-label="تكبير التمثيل الدائري لنسب الإتقان"
+          onclick="openMasteryPhoto(0)"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMasteryPhoto(0)}">
+
+          <div class="mastery-photo-frame">
+            <img
+              src="mastery-1.jpeg"
+              alt="التمثيل الدائري لنسب الإتقان للأعوام الدراسية"
+              loading="lazy">
+          </div>
+
+          <div class="mastery-photo-caption">
+            <h3>التمثيل الدائري لنسب الإتقان</h3>
+            <p>مقارنة نسب الإتقان للأعوام الدراسية</p>
+            <div class="mastery-open-hint">
+              <i data-lucide="zoom-in"></i>
+              اضغطي على الصورة لعرضها بحجم أكبر
+            </div>
+          </div>
+        </article>
+
+        <!-- الصورة الثانية -->
+        <article
+          class="mastery-photo-card"
+          role="button"
+          tabindex="0"
+          aria-label="تكبير مؤشرات نسب الإتقان حسب الصفوف"
+          onclick="openMasteryPhoto(1)"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openMasteryPhoto(1)}">
+
+          <div class="mastery-photo-frame">
+            <img
+              src="mastery-2.jpeg"
+              alt="مؤشرات نسب الإتقان ومقارنة الصفوف"
+              loading="lazy">
+          </div>
+
+          <div class="mastery-photo-caption">
+            <h3>مؤشرات نسب الإتقان حسب الصفوف</h3>
+            <p>عرض ومقارنة مؤشرات الإتقان للصفوف</p>
+            <div class="mastery-open-hint">
+              <i data-lucide="zoom-in"></i>
+              اضغطي على الصورة لعرضها بحجم أكبر
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+  </section>
+
+  <aside class="card qr-side">
+    <div class="qr-panel">
+      <i data-lucide="smartphone" style="width:29px;height:29px;color:#178bd0"></i>
+      <h3>امسح الرمز</h3>
+      <p>للوصول إلى بوابة المدرسة من هاتفك</p>
+      <img id="qrImage" alt="رمز QR للوصول إلى بوابة الزوار">
+      <div class="qr-note">معًا نحو تعليم أفضل</div>
+      <i data-lucide="heart" style="color:#8c7add;width:22px"></i>
+    </div>
+  </aside>
+
+</main>
+
+<section class="footer">
+
+  <div class="benefit">
+    <i data-lucide="settings"></i>
+    <strong>تستفيد من بيانات البرامج<br>التي صممتها المدرسة</strong>
+  </div>
+
+  <div class="benefit">
+    <i data-lucide="clock-3"></i>
+    <strong>تحدث تفاعليًا<br>مع الزوار والمراجعين</strong>
+  </div>
+
+  <div class="benefit">
+    <i data-lucide="users-round"></i>
+    <strong>توصيل الرسائل التربوية<br>بشكل بصري جذاب</strong>
+  </div>
+
+  <div class="benefit">
+    <i data-lucide="eye"></i>
+    <strong>تعزز الانتماء للمدرسة<br>وإنجازاتها</strong>
+  </div>
+
+  <div class="benefit">
+    <div class="footer-tag">
+      <i data-lucide="star" style="width:18px;vertical-align:middle"></i>
+      مميزات الفكرة
+    </div>
+    <strong>تظهر تميز المدرسة وإنجازاتها</strong>
+  </div>
+
+</section>
+
+<div class="motto">
+  جيل متميز أخلاقيا وتحصيليا وتقنيا مع شراكة مجتمعية فاعلة
+  <span>♡</span>
+</div>
+
+<div class="small-note">
+  بوابة مدرسة السويح الرقمية — الواجهة الرئيسية
+</div>
+
+</div>
+</div>
+
+<!-- نافذة تكبير الصورة داخل نفس الصفحة -->
+<div
+  class="mastery-viewer"
+  id="masteryViewer"
+  role="dialog"
+  aria-modal="true"
+  aria-label="عرض صورة نسب الإتقان"
+  onclick="closeMasteryPhoto()">
+
+  <button
+    class="mastery-viewer-close"
+    type="button"
+    aria-label="إغلاق الصورة"
+    onclick="closeMasteryPhoto()">
+    ×
+  </button>
+
+  <div class="mastery-viewer-content" onclick="event.stopPropagation()">
+    <h3 class="mastery-viewer-title" id="masteryViewerTitle"></h3>
+    <img class="mastery-viewer-image" id="masteryViewerImage" src="" alt="">
+  </div>
+</div>
+
+<script>
+/* =========================================
+   إعداد اتصال Supabase
+   ========================================= */
+
+const ATTENDANCE_SUPABASE_URL =
+  "https://nhnefroyunvbumazqrfb.supabase.co";
+
+const ATTENDANCE_SUPABASE_KEY =
+  "sb_publishable_cuNhLB048PaLngq-dbrvcA_75d5PBEe";
+
+const attendanceClient =
+  window.supabase.createClient(
+    ATTENDANCE_SUPABASE_URL,
+    ATTENDANCE_SUPABASE_KEY
+  );
+
+/* =========================================
+   التاريخ حسب توقيت سلطنة عمان
+   ========================================= */
+
+function getOmanToday() {
+
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Muscat",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+
+  const getPart = type =>
+    parts.find(part => part.type === type).value;
+
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
+}
+
+/* =========================================
+   نسبة الحضور اليومية
+   ========================================= */
+
+async function refreshAttendanceRate() {
+
+  const rateElement =
+    document.getElementById("attendanceRate");
+
+  const ringElement =
+    document.getElementById("attendanceRing");
+
+  const statusElement =
+    document.getElementById("attendanceStatus");
+
+  try {
+
+    const today = getOmanToday();
+
+    const { data, error } = await attendanceClient
+      .from("daily_attendance_summary")
+      .select("attendance_rate")
+      .eq("attendance_date", today)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Attendance Error:", error);
+      statusElement.textContent = "تعذر تحميل نسبة الحضور";
+      return;
+    }
+
+    if (!data) {
+      rateElement.textContent = "--%";
+
+      ringElement.style.background =
+        "conic-gradient(var(--teal) 0 0%,#e1f2ed 0% 100%)";
+
+      statusElement.textContent =
+        "لم تُسجل نسبة حضور لهذا اليوم";
+
+      return;
+    }
+
+    const value = Number(data.attendance_rate);
+
+    if (!Number.isFinite(value) || value < 0 || value > 100) {
+      throw new Error("قيمة نسبة الحضور غير صحيحة");
+    }
+
+    const displayedValue = Number.isInteger(value)
+      ? value.toString()
+      : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+
+    rateElement.textContent = displayedValue + "%";
+
+    ringElement.style.background =
+      `conic-gradient(var(--teal) 0 ${value}%,#e1f2ed ${value}% 100%)`;
+
+    statusElement.textContent =
+      "آخر تحديث: " +
+      new Intl.DateTimeFormat("ar-OM", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Asia/Muscat"
+      }).format(new Date());
+
+  } catch (error) {
+
+    console.error("Attendance Display Error:", error);
+    statusElement.textContent = "تعذر عرض نسبة الحضور";
+  }
+}
+
+/* =========================================
+   إنجازات المدرسة من Supabase
+   ========================================= */
+
+let schoolAchievements = [];
+let currentAchievementIndex = 0;
+
+function formatAchievementDate(dateValue) {
+
+  if (!dateValue) return "";
+
+  const dateParts = dateValue.split("-").map(Number);
+
+  if (
+    dateParts.length !== 3 ||
+    dateParts.some(part => !Number.isFinite(part))
+  ) {
+    return "";
+  }
+
+  const [year, month, day] = dateParts;
+
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
+
+  return new Intl.DateTimeFormat("ar-OM", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Muscat"
+  }).format(date);
+}
+
+function displaySchoolAchievement(achievement) {
+
+  const content = document.getElementById("achievementContent");
+  const empty = document.getElementById("achievementEmpty");
+  const image = document.getElementById("achievementImage");
+  const fallback = document.getElementById("achievementImageFallback");
+  const title = document.getElementById("achievementTitle");
+  const description = document.getElementById("achievementDescription");
+  const date = document.getElementById("achievementDate");
+  const counter = document.getElementById("achievementCounter");
+  const indicators = document.getElementById("achievementIndicators");
+
+  if (!content || !empty || !image || !fallback || !title ||
+      !description || !date || !counter || !indicators) {
+    return;
+  }
+
+  if (!achievement) {
+
+    content.style.display = "none";
+    empty.style.display = "flex";
+    counter.textContent = "0 / 0";
+    image.removeAttribute("src");
+    image.style.display = "none";
+    indicators.innerHTML = "";
+    return;
+  }
+
+  content.style.display = "flex";
+  empty.style.display = "none";
+  content.classList.remove("achievement-fade");
+  void content.offsetWidth;
+  content.classList.add("achievement-fade");
+
+  title.textContent = achievement.title || "إنجاز مدرسي";
+  description.textContent = achievement.description || "إنجاز من إنجازات مدرسة السويح.";
+  date.textContent = formatAchievementDate(achievement.achievement_date);
+
+  counter.textContent =
+    `${currentAchievementIndex + 1} / ${schoolAchievements.length}`;
+
+  const imageURL = (achievement.image_url || "").trim();
+
+  if (imageURL) {
+
+    fallback.classList.remove("visible");
+    image.style.display = "block";
+    image.classList.add("is-changing");
+
+    image.onload = function() {
+      image.classList.remove("is-changing");
+      fallback.classList.remove("visible");
+    };
+
+    image.onerror = function() {
+      image.style.display = "none";
+      fallback.classList.add("visible");
+      image.classList.remove("is-changing");
+    };
+
+    image.src = imageURL;
+
+  } else {
+
+    image.removeAttribute("src");
+    image.style.display = "none";
+    image.classList.remove("is-changing");
+    fallback.classList.add("visible");
+  }
+
+  indicators.innerHTML = "";
+
+  schoolAchievements.forEach((item, index) => {
+
+    const indicator = document.createElement("span");
+
+    indicator.className =
+      "achievement-indicator" +
+      (index === currentAchievementIndex ? " active" : "");
+
+    indicator.setAttribute("aria-label", `الإنجاز ${index + 1}`);
+    indicators.appendChild(indicator);
+  });
+}
+
+async function refreshSchoolAchievements() {
+
+  try {
+
+    const { data, error } = await attendanceClient
+      .from("school_achievements")
+      .select("id, title, description, image_url, achievement_date, is_active")
+      .eq("is_active", true)
+      .order("achievement_date", { ascending: false })
+      .order("id", { ascending: false });
+
+    if (error) throw error;
+
+    schoolAchievements = data || [];
+    currentAchievementIndex = 0;
+
+    displaySchoolAchievement(schoolAchievements[0] || null);
+
+  } catch (error) {
+
+    console.error("تعذر تحميل إنجازات المدرسة:", error.message);
+
+    if (!schoolAchievements.length) {
+
+      const title = document.getElementById("achievementTitle");
+      const description = document.getElementById("achievementDescription");
+
+      if (title) title.textContent = "تعذر تحميل الإنجازات";
+
+      if (description) {
+        description.textContent =
+          "يرجى التحقق من الاتصال بقاعدة البيانات.";
+      }
+    }
+  }
+}
+
+function showNextSchoolAchievement() {
+
+  if (schoolAchievements.length <= 1) return;
+
+  currentAchievementIndex =
+    (currentAchievementIndex + 1) % schoolAchievements.length;
+
+  displaySchoolAchievement(
+    schoolAchievements[currentAchievementIndex]
+  );
+}
+
+/* =========================================
+   حديث اليوم والفعاليات المدرسية
+   ========================================= */
+
+let portalEvents = [];
+let currentEventIndex = 0;
+
+function formatPortalEventDate(dateValue) {
+
+  if (!dateValue) return "";
+
+  const [year, month, day] = dateValue.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
+
+  return new Intl.DateTimeFormat("ar-OM", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Muscat"
+  }).format(date);
+}
+
+function displayPortalEvent(event) {
+
+  const card = document.getElementById("todayEventCard");
+  const title = document.getElementById("todayEvent");
+  const date = document.getElementById("eventDate");
+
+  if (!card || !title || !date) return;
+
+  card.classList.remove("event-today", "event-previous");
+
+  if (!event) {
+    title.textContent = "لا توجد أحاديث أو فعاليات منشورة حاليًا.";
+    date.textContent = "";
+    return;
+  }
+
+  const description = (event.description || "").trim();
+
+  title.textContent = description
+    ? `${event.title} — ${description}`
+    : event.title;
+
+  date.textContent = formatPortalEventDate(event.event_date);
+
+  if (event.event_date === getOmanToday()) {
+    card.classList.add("event-today");
+  } else {
+    card.classList.add("event-previous");
+  }
+}
+
+async function refreshPortalEvents() {
+
+  const today = getOmanToday();
+
+  try {
+
+    const { data, error } = await attendanceClient
+      .from("portal_events")
+      .select("id, title, description, event_date, is_active")
+      .eq("is_active", true)
+      .lte("event_date", today)
+      .order("event_date", { ascending: false })
+      .order("id", { ascending: false });
+
+    if (error) throw error;
+
+    portalEvents = data || [];
+    currentEventIndex = 0;
+
+    displayPortalEvent(portalEvents[0] || null);
+
+  } catch (error) {
+
+    console.error("تعذر تحميل حديث اليوم:", error.message);
+
+    if (!portalEvents.length) {
+      document.getElementById("todayEvent").textContent =
+        "تعذر تحميل حديث اليوم حاليًا.";
+    }
+  }
+}
+
+function showNextPortalEvent() {
+
+  if (portalEvents.length <= 1) return;
+
+  currentEventIndex =
+    (currentEventIndex + 1) % portalEvents.length;
+
+  displayPortalEvent(portalEvents[currentEventIndex]);
+}
+
+/* =========================================
+   الساعة والتاريخ
+   ========================================= */
+
+function updateClock() {
+
+  const now = new Date();
+
+  const ar = new Intl.DateTimeFormat("ar-OM", {
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Muscat"
+  }).format(now);
+
+  const day = new Intl.DateTimeFormat("ar-OM", {
+    weekday: "long",
+    timeZone: "Asia/Muscat"
+  }).format(now);
+
+  const time = new Intl.DateTimeFormat("ar-OM", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Muscat"
+  }).format(now);
+
+  document.getElementById("dayName").textContent = day;
+  document.getElementById("dateText").textContent = ar;
+  document.getElementById("clock").textContent = time;
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+
+/* =========================================
+   تشغيل التحديثات
+   ========================================= */
+
+refreshAttendanceRate();
+setInterval(refreshAttendanceRate, 15000);
+
+refreshSchoolAchievements();
+setInterval(refreshSchoolAchievements, 60000);
+setInterval(showNextSchoolAchievement, 10000);
+
+refreshPortalEvents();
+setInterval(refreshPortalEvents, 60000);
+setInterval(showNextPortalEvent, 7000);
+
+/* =========================================
+   عرض صور نسب الإتقان وتكبيرها
+   ========================================= */
+
+const masteryPhotos = [
+  {
+    src: "mastery-1.jpeg",
+    title: "التمثيل الدائري لنسب الإتقان"
+  },
+  {
+    src: "mastery-2.jpeg",
+    title: "مؤشرات نسب الإتقان حسب الصفوف"
+  }
+];
+
+function openMasteryPhoto(index) {
+
+  const photo = masteryPhotos[index];
+  if (!photo) return;
+
+  const viewer = document.getElementById("masteryViewer");
+  const viewerImage = document.getElementById("masteryViewerImage");
+  const viewerTitle = document.getElementById("masteryViewerTitle");
+
+  viewerImage.src = photo.src;
+  viewerImage.alt = photo.title;
+  viewerTitle.textContent = photo.title;
+
+  viewer.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeMasteryPhoto() {
+
+  const viewer = document.getElementById("masteryViewer");
+  const viewerImage = document.getElementById("masteryViewerImage");
+
+  viewer.classList.remove("open");
+  viewerImage.src = "";
+  document.body.style.overflow = "";
+}
+
+/* إغلاق نافذة الصورة بزر Escape */
+document.addEventListener("keydown", function(event) {
+
+  if (event.key === "Escape") {
+    closeMasteryPhoto();
+  }
+});
+
+/* =========================================
+   رمز QR لواجهة الزوار
+   ========================================= */
+
+const visitorURL =
+  new URL("portal.html", window.location.href).href;
+
+document.getElementById("qrImage").src =
+  "https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=" +
+  encodeURIComponent(visitorURL);
+
+/* =========================================
+   التنقل بين أقسام البوابة
+   ========================================= */
+
+const homeView = document.getElementById("homeView");
+const studentsView = document.getElementById("studentsView");
+const researchView = document.getElementById("researchView");
+const reportsView = document.getElementById("reportsView");
+
+const viewLinks = document.querySelectorAll("[data-view]");
+
+function showView(viewName) {
+
+  const validViews = [
+    "home",
+    "students",
+    "research",
+    "reports"
+  ];
+
+  if (!validViews.includes(viewName)) {
+    viewName = "home";
+  }
+
+  homeView.classList.toggle("hidden", viewName !== "home");
+
+  studentsView.classList.toggle(
+    "visible",
+    viewName === "students"
+  );
+
+  researchView.classList.toggle(
+    "visible",
+    viewName === "research"
+  );
+
+  reportsView.classList.toggle(
+    "visible",
+    viewName === "reports"
+  );
+
+  viewLinks.forEach(link => {
+
+    link.classList.toggle(
+      "active",
+      link.dataset.view === viewName
+    );
+  });
+
+  history.replaceState(null, "", "#" + viewName);
+
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
+
+/* التعامل مع روابط الأقسام الداخلية */
+viewLinks.forEach(link => {
+
+  link.addEventListener("click", function(event) {
+
+    if (!this.dataset.view) return;
+
+    event.preventDefault();
+    showView(this.dataset.view);
+  });
+});
+
+/* أزرار العودة إلى الرئيسية */
+document.getElementById("backHome")
+  .addEventListener("click", function() {
+    showView("home");
+  });
+
+document.getElementById("backHomeResearch")
+  .addEventListener("click", function() {
+    showView("home");
+  });
+
+/* فتح القسم المناسب عند تحميل الصفحة */
+const initialView = window.location.hash.replace("#", "");
+
+if (
+  initialView === "students" ||
+  initialView === "research" ||
+  initialView === "reports"
+) {
+  showView(initialView);
+} else {
+  showView("home");
+}
+
+/* إظهار الأيقونات */
+if (window.lucide) {
+  window.lucide.createIcons();
+}
+</script>
+
+</body>
+</html>

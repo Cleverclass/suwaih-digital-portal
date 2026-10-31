@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>إدارة بوابة مدرسة السويح</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Tahoma,Arial,sans-serif;
+  background:#f2f6fc;
+  color:#18365b;
+}
+
+header{
+  background:linear-gradient(120deg,#315ca8,#6386d9);
+  color:white;
+  padding:25px;
+}
+
+header h1{margin:0 0 8px;font-size:25px}
+header p{margin:0;opacity:.9}
+
+main{
+  max-width:1000px;
+  margin:25px auto;
+  padding:0 16px;
+}
+
+.card{
+  background:white;
+  border-radius:18px;
+  padding:22px;
+  margin-bottom:20px;
+  box-shadow:0 5px 20px #244d8010;
+}
+
+h2{font-size:20px;margin-top:0}
+
+label{
+  display:block;
+  margin:13px 0 6px;
+  font-size:14px;
+}
+
+input,select,textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid #d6e0ee;
+  border-radius:10px;
+  font:inherit;
+  background:white;
+}
+
+textarea{min-height:90px;resize:vertical}
+
+button{
+  border:0;
+  border-radius:10px;
+  padding:11px 16px;
+  font:inherit;
+  cursor:pointer;
+}
+
+button:disabled{opacity:.6;cursor:not-allowed}
+
+.primary{background:#315ca8;color:white}
+.secondary{background:#e8efff;color:#244d91}
+.danger{background:#fff0ee;color:#b62f2f}
+
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:16px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.site,.event-item{
+  border:1px solid #e0e8f3;
+  border-radius:13px;
+  padding:15px;
+  overflow-wrap:anywhere;
+}
+
+.site h3,.event-item h3{
+  margin:0 0 8px;
+  font-size:17px;
+}
+
+.site small{color:#647b99}
+
+.site a{
+  display:block;
+  color:#3567bd;
+  margin-top:8px;
+  font-size:13px;
+  overflow-wrap:anywhere;
+}
+
+#status,#loginStatus,#attendanceStatus,#eventStatus,
+#achievementStatus{
+  white-space:pre-wrap;
+  font-size:14px;
+  margin-top:12px;
+}
+
+#loginStatus{color:#b62f2f}
+
+#attendanceStatus,#eventStatus,#achievementStatus{
+  color:#315ca8;
+}
+
+.hidden{display:none!important}
+
+.event-item p{
+  margin:8px 0;
+  line-height:1.7;
+  color:#435b78;
+}
+
+.event-meta{
+  color:#647b99;
+  font-size:13px;
+  margin-top:7px;
+}
+
+.event-published{
+  color:#16834b;
+  font-weight:bold;
+}
+
+.event-unpublished{
+  color:#b62f2f;
+  font-weight:bold;
+}
+
+/* =====================================
+   تنسيقات إدارة الإنجازات
+===================================== */
+
+.achievement-form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.achievement-form-grid .full{
+  grid-column:1/-1;
+}
+
+.achievement-preview{
+  width:100%;
+  min-height:160px;
+  margin-top:12px;
+  border:2px dashed #cbd8ec;
+  border-radius:14px;
+  background:#f6f9fe;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:10px;
+  color:#7185a1;
+  overflow:hidden;
+}
+
+.achievement-preview img{
+  display:none;
+  width:100%;
+  max-height:280px;
+  object-fit:contain;
+  border-radius:10px;
+}
+
+.achievement-preview.has-image{
+  border-style:solid;
+  background:#fff;
+  padding:8px;
+}
+
+.achievement-preview.has-image span{
+  display:none;
+}
+
+.achievement-preview.has-image img{
+  display:block;
+}
+
+.achievement-item{
+  border:1px solid #e0e8f3;
+  border-radius:15px;
+  padding:14px;
+  overflow:hidden;
+  background:#fff;
+}
+
+.achievement-item img{
+  width:100%;
+  height:190px;
+  object-fit:cover;
+  border-radius:11px;
+  margin-bottom:12px;
+  background:#f2f6fc;
+}
+
+.achievement-item h3{
+  font-size:17px;
+  margin:5px 0 9px;
+  color:#244d91;
+}
+
+.achievement-item p{
+  color:#526984;
+  font-size:14px;
+  line-height:1.8;
+  white-space:pre-wrap;
+  margin:8px 0;
+}
+
+.achievement-item small{
+  display:block;
+  color:#7185a1;
+  margin-top:8px;
+}
+
+.achievement-state{
+  font-size:13px;
+  font-weight:bold;
+  margin-top:9px;
+}
+
+.achievement-state.active{color:#16834b}
+.achievement-state.inactive{color:#b62f2f}
+
+@media(max-width:600px){
+  .grid{grid-template-columns:1fr}
+  .achievement-form-grid{grid-template-columns:1fr}
+  .achievement-form-grid .full{grid-column:auto}
+  .card{padding:16px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>بوابة مدرسة السويح الرقمية</h1>
+  <p>لوحة إدارة المواقع والخدمات المدرسية</p>
+</header>
+
+<main>
+
+<!-- تسجيل الدخول -->
+<section class="card" id="loginPanel">
+  <h2>تسجيل دخول الإدارة</h2>
+
+  <label for="email">البريد الإلكتروني</label>
+  <input id="email" type="email" autocomplete="username"
+         placeholder="البريد المسجل في Supabase">
+
+  <label for="password">كلمة المرور</label>
+  <input id="password" type="password"
+         autocomplete="current-password"
+         placeholder="كلمة المرور">
+
+  <div class="actions">
+    <button class="primary" id="loginBtn" type="button">
+      تسجيل الدخول
+    </button>
+  </div>
+
+  <p id="loginStatus" role="status"></p>
+</section>
+
+
+<!-- لوحة الإدارة -->
+<section id="adminPanel" class="hidden">
+
+  <!-- إدارة الروابط -->
+  <div class="card">
+    <div class="actions" style="justify-content:space-between;margin-top:0">
+      <h2>إدارة روابط المواقع</h2>
+      <button class="secondary" id="logoutBtn" type="button">
+        تسجيل الخروج
+      </button>
+    </div>
+    <p>أضيفي المواقع وعدّليها، ثم احفظي التغييرات.</p>
+  </div>
+
+
+  <!-- إدارة نسبة الحضور -->
+  <div class="card">
+    <h2>إدارة نسبة الحضور اليومية</h2>
+
+    <p>أدخلي نسبة حضور الطلبة لهذا اليوم، وستظهر في واجهة البوابة الرئيسية.</p>
+
+    <label for="attendanceDate">تاريخ اليوم</label>
+    <input id="attendanceDate" type="text" readonly>
+
+    <label for="attendanceRateInput">نسبة حضور الطلبة (%)</label>
+    <input id="attendanceRateInput" type="number"
+           min="0" max="100" step="0.01"
+           placeholder="مثال: 96.50">
+
+    <div class="actions">
+      <button class="primary" type="button" id="saveAttendanceBtn">
+        حفظ نسبة الحضور
+      </button>
+
+      <button class="secondary" type="button" id="refreshAttendanceBtn">
+        تحديث النسبة
+      </button>
+    </div>
+
+    <p id="attendanceStatus" role="status"></p>
+  </div>
+
+
+  <!-- إدارة حديث اليوم -->
+  <div class="card">
+    <h2 id="eventFormTitle">إضافة حدث جديد – حديث اليوم</h2>
+
+    <p>أضيفي الفعاليات والمناسبات والأعمال المدرسية مع تحديد تاريخ كل حدث.</p>
+
+    <form id="eventForm">
+      <input type="hidden" id="eventId">
+
+      <label for="eventTitle">عنوان الحدث</label>
+      <input id="eventTitle" required maxlength="150"
+             placeholder="مثال: اليوم الرياضي المدرسي">
+
+      <label for="eventDescription">وصف مختصر للحدث</label>
+      <textarea id="eventDescription" maxlength="500"
+                placeholder="اكتبي وصفًا مختصرًا للحدث..."></textarea>
+
+      <label for="eventDateInput">تاريخ الحدث</label>
+      <input id="eventDateInput" type="date" required>
+
+      <label for="eventActive">حالة الحدث</label>
+      <select id="eventActive">
+        <option value="true">منشور في البوابة</option>
+        <option value="false">غير منشور</option>
+      </select>
+
+      <div class="actions">
+        <button class="primary" type="submit" id="saveEventBtn">
+          حفظ الحدث
+        </button>
+
+        <button class="secondary" type="button" id="cancelEventBtn">
+          إلغاء التعديل
+        </button>
+
+        <button class="secondary" type="button" id="refreshEventsBtn">
+          تحديث الأحداث
+        </button>
+      </div>
+    </form>
+
+    <p id="eventStatus" role="status"></p>
+  </div>
+
+
+  <!-- قائمة الأحداث -->
+  <div class="card">
+    <h2>الأحداث المسجلة</h2>
+    <div id="eventsList" class="grid"></div>
+  </div>
+
+
+  <!-- إدارة إنجازات المدرسة -->
+  <div class="card">
+    <h2 id="achievementFormTitle">إضافة إنجاز مدرسي جديد</h2>
+
+    <p>
+      أضيفي إنجازات مدرسة السويح وصورًا توضيحية لها،
+      وستظهر المنشورات في واجهة البوابة الرئيسية.
+    </p>
+
+    <form id="achievementForm">
+      <input type="hidden" id="achievementId">
+      <input type="hidden" id="existingAchievementImage">
+
+      <div class="achievement-form-grid">
+
+        <div class="full">
+          <label for="achievementTitleInput">عنوان الإنجاز</label>
+          <input id="achievementTitleInput"
+                 maxlength="180"
+                 required
+                 placeholder="مثال: تحقيق المركز الأول في المسابقة">
+        </div>
+
+        <div class="full">
+          <label for="achievementDescriptionInput">وصف الإنجاز</label>
+          <textarea id="achievementDescriptionInput"
+                    maxlength="1000"
+                    placeholder="اكتبي تفاصيل الإنجاز..."></textarea>
+        </div>
+
+        <div>
+          <label for="achievementDateInput">تاريخ الإنجاز</label>
+          <input id="achievementDateInput" type="date" required>
+        </div>
+
+        <div>
+          <label for="achievementActiveInput">حالة الإنجاز</label>
+          <select id="achievementActiveInput">
+            <option value="true">منشور للزوار</option>
+            <option value="false">غير منشور</option>
+          </select>
+        </div>
+
+        <div class="full">
+          <label for="achievementImageInput">صورة الإنجاز</label>
+          <input id="achievementImageInput"
+                 type="file"
+                 accept="image/jpeg,image/png,image/webp">
+
+          <div class="achievement-preview" id="achievementPreview">
+            <span>معاينة الصورة</span>
+            <img id="achievementPreviewImage" alt="معاينة الإنجاز">
+          </div>
+
+          <small>
+            الصيغ المقبولة: JPG وPNG وWEBP، وبحد أقصى 5 ميجابايت.
+          </small>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="submit" id="saveAchievementBtn">
+          حفظ الإنجاز
+        </button>
+
+        <button class="secondary" type="button" id="cancelAchievementBtn">
+          إلغاء
+        </button>
+
+        <button class="secondary" type="button" id="refreshAchievementsBtn">
+          تحديث الإنجازات
+        </button>
+      </div>
+    </form>
+
+    <p id="achievementStatus" role="status"></p>
+  </div>
+
+
+  <!-- الإنجازات المسجلة -->
+  <div class="card">
+    <h2>الإنجازات المسجلة</h2>
+    <div id="achievementsList" class="grid"></div>
+  </div>
+
+
+  <!-- إضافة وتعديل المواقع -->
+  <div class="card">
+    <h2 id="formTitle">إضافة موقع جديد</h2>
+
+    <form id="siteForm">
+      <input type="hidden" id="siteId">
+
+      <label for="title">اسم الموقع</label>
+      <input id="title" required maxlength="120"
+             placeholder="مثال: مصادر التعلم">
+
+      <label for="url">رابط الموقع</label>
+      <input id="url" type="url" required
+             placeholder="https://example.com">
+
+      <label for="category">التصنيف</label>
+      <input id="category" maxlength="80" value="عام" required>
+
+      <label for="icon">اسم الأيقونة (اختياري)</label>
+      <input id="icon" maxlength="40" value="globe">
+
+      <label for="sortOrder">ترتيب العرض</label>
+      <input id="sortOrder" type="number" value="0">
+
+      <label for="active">حالة الموقع</label>
+      <select id="active">
+        <option value="true">منشور للزوار</option>
+        <option value="false">غير منشور</option>
+      </select>
+
+      <div class="actions">
+        <button class="primary" type="submit" id="saveBtn">
+          حفظ الموقع
+        </button>
+
+        <button class="secondary" type="button" id="cancelBtn">
+          إلغاء التعديل
+        </button>
+
+        <button class="secondary" type="button" id="refreshBtn">
+          تحديث القائمة
+        </button>
+      </div>
+    </form>
+
+    <p id="status" role="status"></p>
+  </div>
+
+
+  <!-- المواقع المسجلة -->
+  <div class="card">
+    <h2>المواقع المسجلة</h2>
+    <div id="sitesList" class="grid"></div>
+  </div>
+
+</section>
+</main>
+
+
+<script>
+"use strict";
+
+// =====================================
+// إعداد الاتصال بقاعدة البيانات
+// =====================================
+
+const SUPABASE_URL =
+  "https://nhnefroyunvbumazqrfb.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_cuNhLB048PaLngq-dbrvcA_75d5PBEe";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+const $ = id => document.getElementById(id);
+
+let currentUser = null;
+
+
+// =====================================
+// الرسائل
+// =====================================
+
+function setLoginMessage(text) {
+  $("loginStatus").textContent = text;
+}
+
+function setMessage(text) {
+  $("status").textContent = text;
+}
+
+function setEventMessage(text) {
+  $("eventStatus").textContent = text;
+}
+
+
+// =====================================
+// تاريخ سلطنة عمان
+// =====================================
+
+function getOmanDate() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Muscat",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+
+  const part = type =>
+    parts.find(p => p.type === type).value;
+
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+
+// =====================================
+// التحقق من الإعدادات
+// =====================================
+
+function validConfiguration() {
+  return (
+    SUPABASE_URL.startsWith("https://") &&
+    SUPABASE_PUBLISHABLE_KEY.length > 20
+  );
+}
+
+
+// =====================================
+// تحميل نسبة الحضور
+// =====================================
+
+async function loadAttendance() {
+  if (!currentUser) return;
+
+  const today = getOmanDate();
+
+  $("attendanceDate").value = today;
+
+  const status = $("attendanceStatus");
+  status.textContent = "جارٍ تحميل نسبة الحضور...";
+
+  try {
+    const { data, error } = await db
+      .from("daily_attendance_summary")
+      .select("attendance_rate")
+      .eq("attendance_date", today)
+      .maybeSingle();
+
+    if (error) {
+      status.textContent = "تعذر تحميل النسبة: " + error.message;
+      console.error("Attendance Load Error:", error);
+      return;
+    }
+
+    $("attendanceRateInput").value =
+      data ? data.attendance_rate : "";
+
+    status.textContent = data
+      ? "النسبة المحفوظة لهذا اليوم: " + data.attendance_rate + "%"
+      : "لم تُسجل نسبة حضور لهذا اليوم بعد.";
+
+  } catch (error) {
+    status.textContent = "تعذر الاتصال بقاعدة البيانات.";
+    console.error(error);
+  }
+}
+
+
+// =====================================
+// حفظ نسبة الحضور
+// =====================================
+
+$("saveAttendanceBtn").addEventListener("click", async () => {
+  if (!currentUser) return;
+
+  const input = $("attendanceRateInput");
+  const status = $("attendanceStatus");
+  const button = $("saveAttendanceBtn");
+
+  const rawValue = input.value.trim();
+  const rate = Number(rawValue);
+
+  if (
+    rawValue === "" ||
+    !Number.isFinite(rate) ||
+    rate < 0 ||
+    rate > 100
+  ) {
+    status.textContent = "أدخلي نسبة صحيحة من 0 إلى 100.";
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "جارٍ حفظ النسبة...";
+
+  try {
+    const today = getOmanDate();
+
+    const { error } = await db
+      .from("daily_attendance_summary")
+      .upsert({
+        attendance_date: today,
+        attendance_rate: Number(rate.toFixed(2)),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: "attendance_date"
+      });
+
+    if (error) {
+      status.textContent = "تعذر حفظ النسبة: " + error.message;
+      console.error("Attendance Save Error:", error);
+      return;
+    }
+
+    status.textContent =
+      "تم حفظ نسبة الحضور بنجاح: " +
+      Number(rate.toFixed(2)) + "%";
+
+  } catch (error) {
+    status.textContent =
+      "حدث خطأ أثناء الحفظ. تحققي من الاتصال بالإنترنت.";
+    console.error(error);
+
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$("refreshAttendanceBtn").addEventListener("click", loadAttendance);
+
+
+// =====================================
+// إدارة حديث اليوم – الأحداث
+// =====================================
+
+function resetEventForm() {
+  $("eventForm").reset();
+  $("eventId").value = "";
+  $("eventActive").value = "true";
+
+  $("eventFormTitle").textContent =
+    "إضافة حدث جديد – حديث اليوم";
+
+  $("saveEventBtn").textContent = "حفظ الحدث";
+  setEventMessage("");
+}
+
+function formatEventDate(dateValue) {
+  if (!dateValue) return "";
+
+  const parts = dateValue.split("-");
+  if (parts.length !== 3) return dateValue;
+
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+
+async function loadEvents() {
+  if (!currentUser) return;
+
+  const list = $("eventsList");
+  list.replaceChildren();
+
+  setEventMessage("جارٍ تحميل الأحداث...");
+
+  try {
+    const { data, error } = await db
+      .from("portal_events")
+      .select("*")
+      .order("event_date", { ascending: false })
+      .order("id", { ascending: false });
+
+    if (error) {
+      setEventMessage("تعذر تحميل الأحداث: " + error.message);
+      console.error("Events Load Error:", error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      setEventMessage("لا توجد أحداث مسجلة حتى الآن.");
+      return;
+    }
+
+    const today = getOmanDate();
+
+    data.forEach(event => {
+      const card = document.createElement("article");
+      card.className = "event-item";
+
+      const title = document.createElement("h3");
+      title.textContent = event.title || "";
+
+      const description = document.createElement("p");
+      description.textContent =
+        event.description || "لا يوجد وصف لهذا الحدث.";
+
+      const date = document.createElement("div");
+      date.className = "event-meta";
+      date.textContent =
+        "تاريخ الحدث: " + formatEventDate(event.event_date);
+
+      const state = document.createElement("div");
+      state.className = "event-meta";
+
+      if (event.is_active) {
+        state.textContent = "منشور للزوار";
+        state.classList.add("event-published");
+      } else {
+        state.textContent = "غير منشور";
+        state.classList.add("event-unpublished");
+      }
+
+      const timing = document.createElement("div");
+      timing.className = "event-meta";
+
+      if (event.event_date === today) {
+        timing.textContent = "حدث اليوم";
+        timing.style.color = "#b62f2f";
+        timing.style.fontWeight = "bold";
+      } else if (event.event_date < today) {
+        timing.textContent = "حدث سابق";
+      } else {
+        timing.textContent = "حدث قادم";
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const edit = document.createElement("button");
+      edit.className = "secondary";
+      edit.type = "button";
+      edit.textContent = "تعديل";
+
+      edit.addEventListener("click", () => {
+        $("eventId").value = event.id;
+        $("eventTitle").value = event.title || "";
+        $("eventDescription").value = event.description || "";
+        $("eventDateInput").value = event.event_date || "";
+        $("eventActive").value = String(event.is_active);
+
+        $("eventFormTitle").textContent = "تعديل الحدث";
+        $("saveEventBtn").textContent = "حفظ التعديلات";
+
+        setEventMessage("");
+
+        $("eventForm").scrollIntoView({ behavior: "smooth" });
+      });
+
+      const remove = document.createElement("button");
+      remove.className = "danger";
+      remove.type = "button";
+      remove.textContent = "حذف";
+
+      remove.addEventListener("click", async () => {
+        if (!confirm("هل تريدين حذف الحدث: " + event.title + "؟")) {
+          return;
+        }
+
+        remove.disabled = true;
+
+        try {
+          const { error } = await db
+            .from("portal_events")
+            .delete()
+            .eq("id", event.id);
+
+          if (error) {
+            setEventMessage("تعذر حذف الحدث: " + error.message);
+            console.error(error);
+            return;
+          }
+
+          resetEventForm();
+          await loadEvents();
+          setEventMessage("تم حذف الحدث بنجاح.");
+
+        } catch (error) {
+          setEventMessage("حدث خطأ أثناء حذف الحدث.");
+          console.error(error);
+
+        } finally {
+          remove.disabled = false;
+        }
+      });
+
+      actions.append(edit, remove);
+      card.append(title, description, date, state, timing, actions);
+      list.appendChild(card);
+    });
+
+    setEventMessage("تم تحميل " + data.length + " حدث.");
+
+  } catch (error) {
+    setEventMessage("حدث خطأ أثناء تحميل الأحداث.");
+    console.error(error);
+  }
+}
+
+
+$("eventForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!currentUser) return;
+
+  const title = $("eventTitle").value.trim();
+  const description = $("eventDescription").value.trim();
+  const eventDate = $("eventDateInput").value;
+
+  if (!title || !eventDate) {
+    setEventMessage("أدخلي عنوان الحدث وتاريخه.");
+    return;
+  }
+
+  const record = {
+    title,
+    description,
+    event_date: eventDate,
+    is_active: $("eventActive").value === "true"
+  };
+
+  const button = $("saveEventBtn");
+  button.disabled = true;
+  setEventMessage("جارٍ حفظ الحدث...");
+
+  try {
+    let result;
+
+    if ($("eventId").value) {
+      result = await db
+        .from("portal_events")
+        .update(record)
+        .eq("id", Number($("eventId").value));
+    } else {
+      result = await db.from("portal_events").insert(record);
+    }
+
+    if (result.error) {
+      setEventMessage("تعذر حفظ الحدث: " + result.error.message);
+      console.error("Event Save Error:", result.error);
+      return;
+    }
+
+    resetEventForm();
+    await loadEvents();
+    setEventMessage("تم حفظ الحدث بنجاح.");
+
+  } catch (error) {
+    setEventMessage("حدث خطأ أثناء حفظ الحدث.");
+    console.error(error);
+
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$("cancelEventBtn").addEventListener("click", resetEventForm);
+$("refreshEventsBtn").addEventListener("click", loadEvents);
+
+
+// =====================================
+// إدارة إنجازات المدرسة
+// =====================================
+
+const ACHIEVEMENT_BUCKET = "achievements";
+const MAX_ACHIEVEMENT_IMAGE_SIZE = 5 * 1024 * 1024;
+
+let achievementPreviewUrl = null;
+
+
+function setAchievementMessage(message) {
+  $("achievementStatus").textContent = message;
+}
+
+
+// إعادة ضبط نموذج الإنجازات
+function resetAchievementForm() {
+  $("achievementForm").reset();
+
+  $("achievementId").value = "";
+  $("existingAchievementImage").value = "";
+  $("achievementDateInput").value = getOmanDate();
+  $("achievementActiveInput").value = "true";
+
+  $("achievementFormTitle").textContent =
+    "إضافة إنجاز مدرسي جديد";
+
+  $("saveAchievementBtn").textContent = "حفظ الإنجاز";
+
+  $("achievementPreview").classList.remove("has-image");
+  $("achievementPreviewImage").removeAttribute("src");
+
+  if (achievementPreviewUrl) {
+    URL.revokeObjectURL(achievementPreviewUrl);
+    achievementPreviewUrl = null;
+  }
+
+  setAchievementMessage("");
+}
+
+
+// معاينة الصورة المختارة
+$("achievementImageInput").addEventListener("change", () => {
+  const file = $("achievementImageInput").files[0];
+
+  if (!file) return;
+
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    setAchievementMessage("اختاري صورة بصيغة JPG أو PNG أو WEBP.");
+    $("achievementImageInput").value = "";
+    return;
+  }
+
+  if (file.size > MAX_ACHIEVEMENT_IMAGE_SIZE) {
+    setAchievementMessage("حجم الصورة أكبر من 5 ميجابايت.");
+    $("achievementImageInput").value = "";
+    return;
+  }
+
+  if (achievementPreviewUrl) {
+    URL.revokeObjectURL(achievementPreviewUrl);
+  }
+
+  achievementPreviewUrl = URL.createObjectURL(file);
+
+  $("achievementPreviewImage").src = achievementPreviewUrl;
+  $("achievementPreview").classList.add("has-image");
+
+  setAchievementMessage("تم اختيار الصورة.");
+});
+
+
+// استخراج مسار الصورة من رابط التخزين
+function getAchievementStoragePath(imageUrl) {
+  try {
+    const url = new URL(imageUrl);
+    const marker = "/storage/v1/object/public/achievements/";
+    const index = url.pathname.indexOf(marker);
+
+    if (index === -1) return null;
+
+    return decodeURIComponent(
+      url.pathname.slice(index + marker.length)
+    );
+
+  } catch {
+    return null;
+  }
+}
+
+
+// رفع صورة الإنجاز
+async function uploadAchievementImage(file) {
+  const extension = file.name.split(".").pop().toLowerCase();
+
+  const safeExtension = ["jpg", "jpeg", "png", "webp"].includes(extension)
+    ? extension
+    : "jpg";
+
+  const filePath =
+    currentUser.id + "/" +
+    Date.now() + "-" +
+    crypto.randomUUID() + "." +
+    safeExtension;
+
+  const { error } = await db.storage
+    .from(ACHIEVEMENT_BUCKET)
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type
+    });
+
+  if (error) throw error;
+
+  const { data } = db.storage
+    .from(ACHIEVEMENT_BUCKET)
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+}
+
+
+// تحميل الإنجازات
+async function loadAchievements() {
+  if (!currentUser) return;
+
+  const list = $("achievementsList");
+  list.replaceChildren();
+
+  setAchievementMessage("جارٍ تحميل الإنجازات...");
+
+  try {
+    const { data, error } = await db
+      .from("school_achievements")
+      .select("id,title,description,image_url,achievement_date,is_active")
+      .order("achievement_date", { ascending: false })
+      .order("id", { ascending: false });
+
+    if (error) {
+      setAchievementMessage(
+        "تعذر تحميل الإنجازات: " + error.message
+      );
+      console.error(error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      setAchievementMessage("لا توجد إنجازات مسجلة حتى الآن.");
+      return;
+    }
+
+    data.forEach(item => {
+      const card = document.createElement("article");
+      card.className = "achievement-item";
+
+      if (item.image_url) {
+        const image = document.createElement("img");
+        image.src = item.image_url;
+        image.alt = item.title || "صورة الإنجاز";
+        image.loading = "lazy";
+        card.appendChild(image);
+      }
+
+      const title = document.createElement("h3");
+      title.textContent = item.title || "إنجاز مدرسي";
+
+      const description = document.createElement("p");
+      description.textContent =
+        item.description || "لا يوجد وصف لهذا الإنجاز.";
+
+      const date = document.createElement("small");
+      date.textContent =
+        "التاريخ: " + (item.achievement_date || "");
+
+      const state = document.createElement("div");
+      state.className = "achievement-state " +
+        (item.is_active ? "active" : "inactive");
+
+      state.textContent = item.is_active
+        ? "منشور للزوار"
+        : "غير منشور";
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      // التعديل
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "secondary";
+      edit.textContent = "تعديل";
+
+      edit.addEventListener("click", () => {
+        $("achievementId").value = item.id;
+        $("achievementTitleInput").value = item.title || "";
+
+        $("achievementDescriptionInput").value =
+          item.description || "";
+
+        $("achievementDateInput").value =
+          item.achievement_date || getOmanDate();
+
+        $("achievementActiveInput").value =
+          String(item.is_active);
+
+        $("existingAchievementImage").value =
+          item.image_url || "";
+
+        $("achievementImageInput").value = "";
+
+        if (achievementPreviewUrl) {
+          URL.revokeObjectURL(achievementPreviewUrl);
+          achievementPreviewUrl = null;
+        }
+
+        if (item.image_url) {
+          $("achievementPreviewImage").src = item.image_url;
+          $("achievementPreview").classList.add("has-image");
+        } else {
+          $("achievementPreview").classList.remove("has-image");
+          $("achievementPreviewImage").removeAttribute("src");
+        }
+
+        $("achievementFormTitle").textContent = "تعديل الإنجاز";
+        $("saveAchievementBtn").textContent = "حفظ التعديلات";
+
+        setAchievementMessage("");
+
+        $("achievementForm").scrollIntoView({
+          behavior: "smooth"
+        });
+      });
+
+
+      // الحذف
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "danger";
+      remove.textContent = "حذف";
+
+      remove.addEventListener("click", async () => {
+        if (!confirm("هل تريدين حذف الإنجاز: " + item.title + "؟")) {
+          return;
+        }
+
+        remove.disabled = true;
+
+        try {
+          const { error } = await db
+            .from("school_achievements")
+            .delete()
+            .eq("id", item.id);
+
+          if (error) {
+            setAchievementMessage(
+              "تعذر حذف الإنجاز: " + error.message
+            );
+            return;
+          }
+
+          // حذف الصورة من مساحة التخزين
+          if (item.image_url) {
+            const path = getAchievementStoragePath(item.image_url);
+
+            if (path) {
+              const { error: storageError } = await db.storage
+                .from(ACHIEVEMENT_BUCKET)
+                .remove([path]);
+
+              if (storageError) {
+                console.warn(
+                  "تعذر حذف ملف الصورة:",
+                  storageError
+                );
+              }
+            }
+          }
+
+          resetAchievementForm();
+          await loadAchievements();
+
+          setAchievementMessage("تم حذف الإنجاز بنجاح.");
+
+        } catch (error) {
+          setAchievementMessage("حدث خطأ أثناء حذف الإنجاز.");
+          console.error(error);
+
+        } finally {
+          remove.disabled = false;
+        }
+      });
+
+      actions.append(edit, remove);
+      card.append(title, description, date, state, actions);
+      list.appendChild(card);
+    });
+
+    setAchievementMessage("تم تحميل " + data.length + " إنجاز.");
+
+  } catch (error) {
+    setAchievementMessage("حدث خطأ أثناء تحميل الإنجازات.");
+    console.error(error);
+  }
+}
+
+
+// حفظ الإنجاز
+$("achievementForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!currentUser) return;
+
+  const title = $("achievementTitleInput").value.trim();
+  const description = $("achievementDescriptionInput").value.trim();
+  const date = $("achievementDateInput").value;
+  const file = $("achievementImageInput").files[0];
+
+  if (!title || !date) {
+    setAchievementMessage("أدخلي عنوان الإنجاز وتاريخه.");
+    return;
+  }
+
+  if (file) {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setAchievementMessage("اختاري صورة بصيغة JPG أو PNG أو WEBP.");
+      return;
+    }
+
+    if (file.size > MAX_ACHIEVEMENT_IMAGE_SIZE) {
+      setAchievementMessage("حجم الصورة أكبر من 5 ميجابايت.");
+      return;
+    }
+  }
+
+  const button = $("saveAchievementBtn");
+  button.disabled = true;
+
+  setAchievementMessage("جارٍ حفظ الإنجاز...");
+
+  let uploadedImageUrl = null;
+
+  try {
+    let imageUrl = $("existingAchievementImage").value || null;
+
+    if (file) {
+      imageUrl = await uploadAchievementImage(file);
+      uploadedImageUrl = imageUrl;
+    }
+
+    const record = {
+      title,
+      description,
+      image_url: imageUrl,
+      achievement_date: date,
+      is_active: $("achievementActiveInput").value === "true"
+    };
+
+    let result;
+
+    if ($("achievementId").value) {
+      result = await db
+        .from("school_achievements")
+        .update(record)
+        .eq("id", Number($("achievementId").value));
+    } else {
+      result = await db
+        .from("school_achievements")
+        .insert(record);
+    }
+
+    if (result.error) {
+      // حذف الصورة الجديدة إذا فشل حفظ السجل
+      if (uploadedImageUrl) {
+        const path = getAchievementStoragePath(uploadedImageUrl);
+
+        if (path) {
+          await db.storage
+            .from(ACHIEVEMENT_BUCKET)
+            .remove([path]);
+        }
+      }
+
+      setAchievementMessage(
+        "تعذر حفظ الإنجاز: " + result.error.message
+      );
+
+      console.error(result.error);
+      return;
+    }
+
+    // حذف الصورة القديمة بعد نجاح حفظ الصورة الجديدة
+    const oldImage = $("existingAchievementImage").value;
+
+    if (file && oldImage) {
+      const oldPath = getAchievementStoragePath(oldImage);
+
+      if (oldPath) {
+        const { error: removeError } = await db.storage
+          .from(ACHIEVEMENT_BUCKET)
+          .remove([oldPath]);
+
+        if (removeError) {
+          console.warn("تعذر حذف الصورة القديمة:", removeError);
+        }
+      }
+    }
+
+    resetAchievementForm();
+    await loadAchievements();
+
+    setAchievementMessage("تم حفظ الإنجاز بنجاح.");
+
+  } catch (error) {
+    setAchievementMessage(
+      "حدث خطأ أثناء الحفظ: " + error.message
+    );
+
+    console.error(error);
+
+  } finally {
+    button.disabled = false;
+  }
+});
+
+
+// أزرار إدارة الإنجازات
+$("cancelAchievementBtn").addEventListener(
+  "click",
+  resetAchievementForm
+);
+
+$("refreshAchievementsBtn").addEventListener(
+  "click",
+  loadAchievements
+);
+
+
+// =====================================
+// التحقق من الروابط
+// =====================================
+
+function safeUrl(value) {
+  try {
+    const u = new URL(value);
+
+    return ["https:", "http:"].includes(u.protocol)
+      ? u.href
+      : null;
+
+  } catch {
+    return null;
+  }
+}
+
+
+// =====================================
+// إعادة ضبط نموذج المواقع
+// =====================================
+
+function resetForm() {
+  $("siteForm").reset();
+
+  $("siteId").value = "";
+  $("category").value = "عام";
+  $("icon").value = "globe";
+  $("sortOrder").value = "0";
+  $("active").value = "true";
+
+  $("formTitle").textContent = "إضافة موقع جديد";
+  $("saveBtn").textContent = "حفظ الموقع";
+
+  setMessage("");
+}
+
+
+// =====================================
+// تحميل المواقع
+// =====================================
+
+async function loadSites() {
+  if (!currentUser) return;
+
+  const list = $("sitesList");
+  list.replaceChildren();
+
+  setMessage("جارٍ تحميل المواقع...");
+
+  try {
+    const { data, error } = await db
+      .from("portal_links")
+      .select("*")
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      setMessage("تعذر تحميل المواقع: " + error.message);
+      console.error(error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      setMessage("لا توجد مواقع مسجلة حتى الآن.");
+      return;
+    }
+
+    data.forEach(site => {
+      const card = document.createElement("article");
+      card.className = "site";
+
+      const name = document.createElement("h3");
+      name.textContent = site.title;
+
+      const category = document.createElement("small");
+      category.textContent =
+        site.category + " • " +
+        (site.is_active ? "منشور" : "غير منشور");
+
+      const link = document.createElement("a");
+      const safe = safeUrl(site.url);
+
+      link.textContent = safe ? site.url : "رابط غير صالح";
+
+      if (safe) {
+        link.href = safe;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const edit = document.createElement("button");
+      edit.className = "secondary";
+      edit.type = "button";
+      edit.textContent = "تعديل";
+
+      edit.addEventListener("click", () => {
+        $("siteId").value = site.id;
+        $("title").value = site.title;
+        $("url").value = site.url;
+        $("category").value = site.category;
+        $("icon").value = site.icon || "globe";
+        $("sortOrder").value = site.sort_order;
+        $("active").value = String(site.is_active);
+
+        $("formTitle").textContent = "تعديل الموقع";
+        $("saveBtn").textContent = "حفظ التعديلات";
+
+        setMessage("");
+
+        $("siteForm").scrollIntoView({ behavior: "smooth" });
+      });
+
+      const remove = document.createElement("button");
+      remove.className = "danger";
+      remove.type = "button";
+      remove.textContent = "حذف";
+
+      remove.addEventListener("click", async () => {
+        if (!confirm("هل تريدين حذف الموقع: " + site.title + "؟")) {
+          return;
+        }
+
+        remove.disabled = true;
+
+        try {
+          const { error } = await db
+            .from("portal_links")
+            .delete()
+            .eq("id", site.id);
+
+          if (error) {
+            setMessage("تعذر الحذف: " + error.message);
+            console.error(error);
+            return;
+          }
+
+          resetForm();
+          await loadSites();
+          setMessage("تم حذف الموقع.");
+
+        } catch (error) {
+          setMessage("حدث خطأ أثناء حذف الموقع.");
+          console.error(error);
+
+        } finally {
+          remove.disabled = false;
+        }
+      });
+
+      actions.append(edit, remove);
+      card.append(name, category, link, actions);
+      list.appendChild(card);
+    });
+
+    setMessage("تم تحميل " + data.length + " موقع.");
+
+  } catch (error) {
+    setMessage("حدث خطأ أثناء تحميل المواقع.");
+    console.error(error);
+  }
+}
+
+
+// =====================================
+// تسجيل الدخول
+// =====================================
+
+$("loginBtn").addEventListener("click", async () => {
+  if (!validConfiguration()) {
+    setLoginMessage("تحققي من إعدادات الاتصال بمشروع Supabase.");
+    return;
+  }
+
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  if (!email || !password) {
+    setLoginMessage("أدخلي البريد الإلكتروني وكلمة المرور.");
+    return;
+  }
+
+  const button = $("loginBtn");
+  button.disabled = true;
+  setLoginMessage("جارٍ تسجيل الدخول...");
+
+  try {
+    const { data, error } = await db.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      setLoginMessage("خطأ تسجيل الدخول: " + error.message);
+      console.error("Supabase Login Error:", error);
+      return;
+    }
+
+    currentUser = data.user;
+
+    // التحقق من صلاحية المدير
+    const {
+      data: isAdmin,
+      error: adminError
+    } = await db.rpc("is_portal_admin");
+
+    if (adminError) {
+      await db.auth.signOut();
+      currentUser = null;
+
+      setLoginMessage(
+        "تعذر التحقق من صلاحية الإدارة: " + adminError.message
+      );
+
+      console.error("Admin Verification Error:", adminError);
+      return;
+    }
+
+    if (isAdmin !== true) {
+      await db.auth.signOut();
+      currentUser = null;
+
+      setLoginMessage("هذا الحساب غير مخوّل لإدارة البوابة.");
+      return;
+    }
+
+    $("loginPanel").classList.add("hidden");
+    $("adminPanel").classList.remove("hidden");
+
+    setLoginMessage("");
+
+    // تحميل جميع البيانات
+    resetAchievementForm();
+
+    await Promise.all([
+      loadSites(),
+      loadAttendance(),
+      loadEvents(),
+      loadAchievements()
+    ]);
+
+  } catch (error) {
+    setLoginMessage(
+      "حدث خطأ أثناء تسجيل الدخول: " + error.message
+    );
+
+    console.error("Login Exception:", error);
+
+  } finally {
+    button.disabled = false;
+  }
+});
+
+
+// =====================================
+// إضافة موقع أو تعديل موقع
+// =====================================
+
+$("siteForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!currentUser) return;
+
+  const url = safeUrl($("url").value.trim());
+
+  if (!url) {
+    setMessage(
+      "أدخلي رابطًا صحيحًا يبدأ بـ https:// أو http://"
+    );
+    return;
+  }
+
+  const record = {
+    title: $("title").value.trim(),
+    url,
+    category: $("category").value.trim(),
+    icon: $("icon").value.trim() || "globe",
+    sort_order: Number($("sortOrder").value) || 0,
+    is_active: $("active").value === "true"
+  };
+
+  if (!record.title || !record.category) {
+    setMessage("أكملي اسم الموقع والتصنيف.");
+    return;
+  }
+
+  const button = $("saveBtn");
+  button.disabled = true;
+
+  try {
+    let result;
+
+    if ($("siteId").value) {
+      result = await db
+        .from("portal_links")
+        .update(record)
+        .eq("id", Number($("siteId").value));
+    } else {
+      result = await db.from("portal_links").insert(record);
+    }
+
+    if (result.error) {
+      setMessage("تعذر الحفظ: " + result.error.message);
+      console.error(result.error);
+      return;
+    }
+
+    resetForm();
+    await loadSites();
+
+    setMessage("تم حفظ الموقع بنجاح.");
+
+  } catch (error) {
+    setMessage("حدث خطأ أثناء حفظ الموقع.");
+    console.error(error);
+
+  } finally {
+    button.disabled = false;
+  }
+});
+
+
+// أزرار إدارة المواقع
+$("cancelBtn").addEventListener("click", resetForm);
+$("refreshBtn").addEventListener("click", loadSites);
+
+
+// =====================================
+// تسجيل الخروج
+// =====================================
+
+$("logoutBtn").addEventListener("click", async () => {
+  const button = $("logoutBtn");
+  button.disabled = true;
+
+  try {
+    const { error } = await db.auth.signOut();
+
+    if (error) {
+      alert("تعذر تسجيل الخروج: " + error.message);
+      return;
+    }
+
+    currentUser = null;
+
+    $("adminPanel").classList.add("hidden");
+    $("loginPanel").classList.remove("hidden");
+
+    $("password").value = "";
+
+    $("sitesList").replaceChildren();
+    $("eventsList").replaceChildren();
+
+    // تنظيف الإنجازات
+    $("achievementsList").replaceChildren();
+    resetAchievementForm();
+
+    $("attendanceRateInput").value = "";
+    $("attendanceDate").value = "";
+    $("attendanceStatus").textContent = "";
+
+    $("eventStatus").textContent = "";
+    $("status").textContent = "";
+    $("loginStatus").textContent = "";
+
+    resetEventForm();
+    resetForm();
+
+  } catch (error) {
+    alert("حدث خطأ أثناء تسجيل الخروج: " + error.message);
+
+  } finally {
+    button.disabled = false;
+  }
+});
+
+
+// =====================================
+// استعادة الجلسة السابقة
+// =====================================
+
+(async () => {
+  if (!validConfiguration()) return;
+
+  try {
+    const {
+      data,
+      error
+    } = await db.auth.getSession();
+
+    if (error) {
+      console.error("Session Error:", error);
+      return;
+    }
+
+    if (!data.session) return;
+
+    const {
+      data: isAdmin,
+      error: adminError
+    } = await db.rpc("is_portal_admin");
+
+    if (adminError || isAdmin !== true) {
+      await db.auth.signOut();
+      return;
+    }
+
+    currentUser = data.session.user;
+
+    $("loginPanel").classList.add("hidden");
+    $("adminPanel").classList.remove("hidden");
+
+    resetAchievementForm();
+
+    await Promise.all([
+      loadSites(),
+      loadAttendance(),
+      loadEvents(),
+      loadAchievements()
+    ]);
+
+  } catch (error) {
+    console.error("Session Restore Error:", error);
+  }
+})();
+
+</script>
+
+</body>
+</html>
