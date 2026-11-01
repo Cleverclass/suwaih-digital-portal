@@ -865,7 +865,7 @@ button{cursor:pointer}
 
   <div class="school">
     <strong>مدرسة السويح</strong>
-    <span>للصفوف (5–10)</span>
+    <span>للصفوف (1–10)</span>
   </div>
 </header>
 
@@ -923,7 +923,7 @@ button{cursor:pointer}
           <div class="hero-content">
             <h2>بالعلم ..<br>نرتقي ونبني المستقبل</h2>
             <p>بيئة تعليمية ملهمة تصنع التميز والإبداع</p>
-            <div class="hero-label">مدرسة السويح للصفوف (5–10)</div>
+            <div class="hero-label">مدرسة السويح للصفوف (1–10)</div>
           </div>
         </article>
 
@@ -1026,7 +1026,7 @@ button{cursor:pointer}
 
         <article class="card info-card purple">
           <i data-lucide="book-open-text" class="big-icon" style="color:#7963d6"></i>
-          <h3>رسالة المدرسة</h3>
+          <h4رسالة المدرسة</h3>
           <p>
             تسعى مدرسة السويح للتعليم الأساسي لتكوين جيل مميز أخلاقيا من زرع قيم وأخلاقيات المجتمع الاسلامي وتحصيليا من خلال طرائق تدريس حديثة، وتقنيا من خلال اكسابه المهارات التكنولوجية الحديثة، في إطار من المشاركة المجتمعية الفاعلة لتحقيق جودة وتميز في العمل المدرسي.
           </p>
@@ -1034,17 +1034,13 @@ button{cursor:pointer}
 
         <article class="card info-card mint">
           <i data-lucide="target" class="big-icon" style="color:#0ca69b"></i>
-          <h3>القيم التى تلتزم بها المدرسة</h3>
+          <h4القيم التى تلتزم بها المدرسة</h3>
           <p>
             • الإتقان والجودة في العمل<br>
             • الالتزام والانضباط.<br>
             • الاحترام والمسؤولية.<br>
             • التعاون والعمل بروح الفريق.<br>
-            • الأمانة والنزاهة.<br>
-            • الإبداع والابتكار.<br>
-            • المواطنة والانتماء.<br>
-            • التعلم المستمر والتطوير المهني.<br>
-            • الشراكة المجتمعية الفاعلة.
+          
           </p>
         </article>
 
@@ -1131,7 +1127,7 @@ button{cursor:pointer}
           </div>
         </div>
 
-        <div class="students-footnote">مدرسة السويح للصفوف (5–10)</div>
+        <div class="students-footnote">مدرسة السويح للصفوف (1–10</div>
 
       </div>
     </section>
@@ -1251,16 +1247,28 @@ button{cursor:pointer}
 
   </section>
 
-  <aside class="card qr-side">
-    <div class="qr-panel">
-      <i data-lucide="smartphone" style="width:29px;height:29px;color:#178bd0"></i>
-      <h3>امسح الرمز</h3>
-      <p>للوصول إلى بوابة المدرسة من هاتفك</p>
-      <img id="qrImage" alt="رمز QR للوصول إلى بوابة الزوار">
-      <div class="qr-note">معًا نحو تعليم أفضل</div>
-      <i data-lucide="heart" style="color:#8c7add;width:22px"></i>
-    </div>
-  </aside>
+
+<aside class="card qr-side">
+  <div class="qr-panel">
+    <i data-lucide="smartphone" style="width:29px;height:29px;color:#178bd0"></i>
+
+    <h3>امسح الرمز</h3>
+
+    <p>للوصول إلى بوابة المدرسة من هاتفك</p>
+
+<img
+  id="qrImage"
+  src="qr-suwaih-portal.png"
+  alt="امسح الرمز لفتح بوابة مدرسة السويح"
+  style="width:180px;height:180px;object-fit:contain;cursor:pointer;"
+>
+
+    <div class="qr-note">معًا نحو تعليم أفضل</div>
+
+    <i data-lucide="heart" style="color:#8c7add;width:22px"></i>
+  </div>
+</aside>
+
 
 </main>
 
@@ -1805,12 +1813,7 @@ document.addEventListener("keydown", function(event) {
    رمز QR لواجهة الزوار
    ========================================= */
 
-const visitorURL =
-  new URL("portal.html", window.location.href).href;
 
-document.getElementById("qrImage").src =
-  "https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=" +
-  encodeURIComponent(visitorURL);
 
 /* =========================================
    التنقل بين أقسام البوابة
