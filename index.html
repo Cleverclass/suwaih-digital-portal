@@ -1760,6 +1760,90 @@ button{cursor:pointer}
     height: 110px;
   }
 }
+/* تصغير الواجهة على الشاشات الكبيرة */
+@media (min-width: 1200px) {
+  body {
+    zoom: 85%;
+  }
+}
+/* بطاقة الحصة الحالية والقادمة */
+.feature-image.schedule-card {
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  text-align: right;
+  padding: 14px;
+  color: #164b78;
+  background: linear-gradient(145deg,#e8f5ff,#dff8f2);
+  transition: background .4s ease, color .4s ease;
+}
+
+.schedule-card .schedule-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+.schedule-card .schedule-period {
+  background: rgba(255,255,255,.82);
+  border: 1px solid rgba(255,255,255,.8);
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin-top: 7px;
+}
+
+.schedule-card .schedule-period-label {
+  display: block;
+  font-size: 10px;
+  opacity: .8;
+  margin-bottom: 3px;
+}
+
+.schedule-card .schedule-period strong {
+  display: block;
+  font-size: 14px;
+}
+
+.schedule-card .schedule-period small {
+  display: block;
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.schedule-card .schedule-status {
+  font-size: 11px;
+  text-align: center;
+  margin-top: 9px;
+  font-weight: 700;
+}
+
+.feature-image.schedule-current {
+  background: linear-gradient(145deg,#d8f7ed,#bcecdf);
+  color: #086c62;
+}
+
+.feature-image.schedule-upcoming {
+  background: linear-gradient(145deg,#fff1d8,#ffe0ad);
+  color: #8a5710;
+}
+
+.feature-image.schedule-break {
+  background: linear-gradient(145deg,#e9e2ff,#d9ceff);
+  color: #5944a5;
+}
+
+.feature-image.schedule-finished {
+  background: linear-gradient(145deg,#e8eff7,#dce7f2);
+  color: #45617d;
+}
+
+.feature-image.schedule-error {
+  background: linear-gradient(145deg,#ffe8e8,#fbdada);
+  color: #963e3e;
+}
 </style>
 
 </head>
@@ -2153,7 +2237,7 @@ button{cursor:pointer}
 
           <p>
 
-            تسعى مدرسة السويح للتعليم الأساسي لتكوين جيل مميز أخلاقيا من زرع قيم وأخلاقيات المجتمع الاسلامي وتحصيليا من خلال طرائق تدريس حديثة، وتقنيا من خلال اكسابه المهارات التكنولوجية الحديثة، في إطار من المشاركة المجتمعية الفاعلة لتحقيق جودة وتميز في العمل المدرسي.
+           تسعى مدرسة السويح للتعليم الأساسي إلى بناء جيل متميز أخلاقيًا وتحصيليًا وتقنيًا، من خلال ترسيخ قيم المجتمع الإسلامي، وتوظيف طرائق التدريس الحديثة، وتنمية المهارات التكنولوجية، وتعزيز المشاركة المجتمعية لتحقيق جودة وتميز في العمل المدرسي.
 
           </p>
 
@@ -2219,17 +2303,31 @@ button{cursor:pointer}
 
 
 
-        <article class="card feature-image">
+        <article class="card feature-image schedule-card" id="weeklyScheduleCard">
 
-          <div>
+  <h3 class="schedule-title">الجدول المدرسي اليومي</h3>
 
-            <h3>مدرستنا ..<br>حكاية نجاح</h3>
+  <div class="schedule-period">
+    <span class="schedule-period-label" id="currentPeriodLabel">
+      الحصة الحالية
+    </span>
+    <strong id="currentPeriodName">جارٍ تحميل الجدول...</strong>
+    <small id="currentPeriodTime"></small>
+  </div>
 
-            <p style="font-size:12px">رؤية واضحة • إنجاز مستمر</p>
+  <div class="schedule-period">
+    <span class="schedule-period-label" id="nextPeriodLabel">
+      الحصة القادمة
+    </span>
+    <strong id="nextPeriodName">--</strong>
+    <small id="nextPeriodTime"></small>
+  </div>
 
-          </div>
+  <div class="schedule-status" id="scheduleStatus">
+    يتم الاتصال بالجدول الأسبوعي...
+  </div>
 
-        </article>
+</article>
 
 
 
@@ -2860,7 +2958,293 @@ function getOmanToday() {
   return `${getPart("year")}-${getPart("month")}-${getPart("day")}`;
 
 }
+/* =========================================
+   الجدول الأسبوعي - القراءة من Supabase
+   ========================================= */
 
+let activeWeeklySchedule = null;
+let activeScheduleWeek = null;
+let scheduleLoadError = false;
+
+const scheduleDayKeys = {
+  "Sunday": "sunday",
+  "Monday": "monday",
+  "Tuesday": "tuesday",
+  "Wednesday": "wednesday",
+  "Thursday": "thursday"
+};
+
+function getOmanWeekday() {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    timeZone: "Asia/Muscat"
+  }).format(new Date());
+}
+
+function getOmanMinutes() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Muscat",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(new Date());
+
+  const hour = Number(parts.find(p => p.type === "hour").value);
+  const minute = Number(parts.find(p => p.type === "minute").value);
+
+  return hour * 60 + minute;
+}
+
+function scheduleTimeToMinutes(value) {
+  if (!value) return NaN;
+
+  const match = String(value).match(/^(\d{1,2}):(\d{2})/);
+
+  if (!match) return NaN;
+
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function formatScheduleTime(value) {
+  if (!value) return "";
+
+  const minutes = scheduleTimeToMinutes(value);
+
+  if (!Number.isFinite(minutes)) return value;
+
+  const date = new Date(Date.UTC(
+    2020, 0, 1,
+    Math.floor(minutes / 60),
+    minutes % 60
+  ));
+
+  return new Intl.DateTimeFormat("ar-OM", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC"
+  }).format(date);
+}
+
+function setScheduleCardState(state) {
+  const card = document.getElementById("weeklyScheduleCard");
+
+  if (!card) return;
+
+  card.classList.remove(
+    "schedule-current",
+    "schedule-upcoming",
+    "schedule-break",
+    "schedule-finished",
+    "schedule-error"
+  );
+
+  if (state) {
+    card.classList.add(state);
+  }
+}
+
+function setScheduleText(id, value) {
+  const element = document.getElementById(id);
+
+  if (element) {
+    element.textContent = value;
+  }
+}
+
+function displayWeeklySchedule() {
+
+  const today = getOmanToday();
+  const weekday = getOmanWeekday();
+  const dayKey = scheduleDayKeys[weekday];
+
+  if (!dayKey) {
+    setScheduleText("currentPeriodName", "لا توجد حصص اليوم");
+    setScheduleText("currentPeriodTime", "");
+    setScheduleText("nextPeriodName", "--");
+    setScheduleText("nextPeriodTime", "");
+    setScheduleText("scheduleStatus", "نتمنى لكم يومًا سعيدًا");
+    setScheduleCardState("schedule-finished");
+    return;
+  }
+
+  if (!activeWeeklySchedule) {
+
+    if (scheduleLoadError) {
+      setScheduleText("currentPeriodName", "تعذر تحميل الجدول");
+      setScheduleText("currentPeriodTime", "");
+      setScheduleText("nextPeriodName", "--");
+      setScheduleText("nextPeriodTime", "");
+      setScheduleText("scheduleStatus", "يرجى التحقق من الاتصال بقاعدة البيانات");
+      setScheduleCardState("schedule-error");
+    } else {
+      setScheduleText("currentPeriodName", "جارٍ تحميل الجدول...");
+      setScheduleText("currentPeriodTime", "");
+      setScheduleText("nextPeriodName", "--");
+      setScheduleText("nextPeriodTime", "");
+      setScheduleText("scheduleStatus", "انتظري لحظات");
+    }
+
+    return;
+  }
+
+  const periods = Array.isArray(activeWeeklySchedule[dayKey])
+    ? activeWeeklySchedule[dayKey]
+    : [];
+
+  const validPeriods = periods
+    .map(period => ({
+      subject: String(period.subject || "").trim(),
+      start: String(period.start || "").trim(),
+      end: String(period.end || "").trim(),
+      startMinutes: scheduleTimeToMinutes(period.start),
+      endMinutes: scheduleTimeToMinutes(period.end)
+    }))
+    .filter(period =>
+      period.subject &&
+      Number.isFinite(period.startMinutes) &&
+      Number.isFinite(period.endMinutes) &&
+      period.endMinutes > period.startMinutes
+    )
+    .sort((a, b) => a.startMinutes - b.startMinutes);
+
+  if (!validPeriods.length) {
+    setScheduleText("currentPeriodName", "لم يُدخل جدول هذا اليوم");
+    setScheduleText("currentPeriodTime", "");
+    setScheduleText("nextPeriodName", "--");
+    setScheduleText("nextPeriodTime", "");
+    setScheduleText("scheduleStatus", "سيظهر الجدول عند إدخاله واعتماده");
+    setScheduleCardState("schedule-finished");
+    return;
+  }
+
+  const nowMinutes = getOmanMinutes();
+
+  const currentPeriod = validPeriods.find(period =>
+    nowMinutes >= period.startMinutes &&
+    nowMinutes < period.endMinutes
+  );
+
+  const nextPeriod = validPeriods.find(period =>
+    period.startMinutes > nowMinutes
+  );
+
+  if (currentPeriod) {
+
+    const isBreak = /فسحة|استراحة/.test(currentPeriod.subject);
+
+    setScheduleText(
+      "currentPeriodLabel",
+      isBreak ? "الوقت الحالي" : "الحصة الحالية"
+    );
+
+    setScheduleText(
+      "currentPeriodName",
+      isBreak ? "الفسحة الآن" : currentPeriod.subject
+    );
+
+    setScheduleText(
+      "currentPeriodTime",
+      `${formatScheduleTime(currentPeriod.start)} - ${formatScheduleTime(currentPeriod.end)}`
+    );
+
+    if (nextPeriod) {
+
+      setScheduleText("nextPeriodLabel", "القادم");
+      setScheduleText("nextPeriodName", nextPeriod.subject);
+      setScheduleText(
+        "nextPeriodTime",
+        `${formatScheduleTime(nextPeriod.start)} - ${formatScheduleTime(nextPeriod.end)}`
+      );
+
+    } else {
+
+      setScheduleText("nextPeriodLabel", "الجدول");
+      setScheduleText("nextPeriodName", "لا توجد حصة أخرى");
+      setScheduleText("nextPeriodTime", "");
+    }
+
+    setScheduleText(
+      "scheduleStatus",
+      isBreak ? "وقت الاستراحة" : "نتمنى لكم حصة تعليمية ممتعة"
+    );
+
+    setScheduleCardState(
+      isBreak ? "schedule-break" : "schedule-current"
+    );
+
+    return;
+  }
+
+  if (nextPeriod) {
+
+    setScheduleText("currentPeriodLabel", "الحالة الحالية");
+    setScheduleText("currentPeriodName", "لا توجد حصة الآن");
+    setScheduleText("currentPeriodTime", "");
+
+    setScheduleText("nextPeriodLabel", "الحصة القادمة");
+    setScheduleText("nextPeriodName", nextPeriod.subject);
+    setScheduleText(
+      "nextPeriodTime",
+      `${formatScheduleTime(nextPeriod.start)} - ${formatScheduleTime(nextPeriod.end)}`
+    );
+
+    setScheduleText("scheduleStatus", "استعدوا للحصة القادمة");
+    setScheduleCardState("schedule-upcoming");
+
+    return;
+  }
+
+  setScheduleText("currentPeriodLabel", "الدوام المدرسي");
+  setScheduleText("currentPeriodName", "انتهت حصص اليوم");
+  setScheduleText("currentPeriodTime", "");
+  setScheduleText("nextPeriodLabel", "الحصة القادمة");
+  setScheduleText("nextPeriodName", "--");
+  setScheduleText("nextPeriodTime", "");
+  setScheduleText("scheduleStatus", "نتمنى لكم يومًا موفقًا");
+  setScheduleCardState("schedule-finished");
+}
+
+async function refreshWeeklySchedule() {
+
+  try {
+
+    const today = getOmanToday();
+
+    const { data, error } = await attendanceClient
+      .from("weekly_class_schedules")
+      .select("week_start, schedule")
+      .eq("is_published", true)
+      .lte("week_start", today)
+      .order("week_start", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      activeWeeklySchedule = null;
+      activeScheduleWeek = null;
+      scheduleLoadError = false;
+      displayWeeklySchedule();
+      return;
+    }
+
+    activeWeeklySchedule = data.schedule || {};
+    activeScheduleWeek = data.week_start;
+    scheduleLoadError = false;
+
+    displayWeeklySchedule();
+
+  } catch (error) {
+
+    console.error("خطأ تحميل الجدول الأسبوعي:", error);
+
+    scheduleLoadError = true;
+    displayWeeklySchedule();
+
+  }
+}
 
 
 /* =========================================
@@ -3621,7 +4005,13 @@ refreshAttendanceRate();
 
 setInterval(refreshAttendanceRate, 15000);
 
+/* تحديث الجدول الأسبوعي */
+refreshWeeklySchedule();
 
+setInterval(refreshWeeklySchedule, 60000);
+
+/* تحديث الحصة حسب الوقت */
+setInterval(displayWeeklySchedule, 15000);
 
 refreshSchoolAchievements();
 
