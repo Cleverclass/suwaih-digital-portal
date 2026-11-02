@@ -1695,7 +1695,71 @@ button{cursor:pointer}
 @media(max-width:650px){
   .school-info-header{padding:12px;align-items:flex-start;flex-direction:column}
 }
+/* عرض نسب حضور الطلبة والمعلمين */
+.attendance-dual-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 5px 6px 0;
+}
 
+.attendance-item {
+  min-width: 0;
+  text-align: center;
+}
+
+.attendance-item .ring-wrap {
+  padding: 12px 3px 7px;
+}
+
+.attendance-item .ring {
+  width: 105px;
+  height: 105px;
+  margin: auto;
+}
+
+.attendance-item .ring:before {
+  inset: 10px;
+}
+
+.attendance-item .ring-inner strong {
+  font-size: 22px;
+}
+
+.attendance-item .ring-inner span {
+  font-size: 10px;
+}
+
+.attendance-item .attendance-caption {
+  padding: 3px 2px 8px;
+  font-size: 11px;
+}
+
+.attendance .attendance-status {
+  padding: 5px 6px 10px;
+}
+
+@media (max-width: 1050px) {
+  .attendance {
+    display: block;
+  }
+
+  .attendance-dual-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .attendance-item .ring {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@media (max-width: 650px) {
+  .attendance-item .ring {
+    width: 110px;
+    height: 110px;
+  }
+}
 </style>
 
 </head>
@@ -1746,7 +1810,7 @@ button{cursor:pointer}
 
       <h1>بوابة مدرسة السويح الرقمية</h1>
 
-      <p>منصة موحدة للخدمات والإنجازات المدرسية</p>
+      <p>منصة موحدة للخدمات والمبادرات المدرسية</p>
 
     </div>
 
@@ -2030,47 +2094,46 @@ button{cursor:pointer}
 
         <article class="card attendance">
 
+  <div class="card-heading">
+    <span>نسب الحضور اليومية</span>
+    <i data-lucide="users"></i>
+  </div>
 
+  <div class="attendance-dual-grid">
 
-          <div class="card-heading">
-
-            <span>نسبة الحضور اليومي</span>
-
-            <i data-lucide="users"></i>
-
+    <!-- حضور الطلبة -->
+    <div class="attendance-item">
+      <div class="ring-wrap">
+        <div class="ring" id="attendanceRing">
+          <div class="ring-inner">
+            <strong id="attendanceRate">--%</strong>
+            <span>من الطلبة</span>
           </div>
+        </div>
+      </div>
+      <div class="attendance-caption">حضور الطلبة</div>
+    </div>
 
-
-
-          <div class="ring-wrap">
-
-            <div class="ring" id="attendanceRing">
-
-              <div class="ring-inner">
-
-                <strong id="attendanceRate">--%</strong>
-
-                <span>من الطلاب</span>
-
-              </div>
-
-            </div>
-
+    <!-- حضور المعلمين -->
+    <div class="attendance-item">
+      <div class="ring-wrap">
+        <div class="ring" id="teacherAttendanceRing">
+          <div class="ring-inner">
+            <strong id="teacherAttendanceRate">--%</strong>
+            <span>من المعلمين</span>
           </div>
+        </div>
+      </div>
+      <div class="attendance-caption">حضور المعلمين</div>
+    </div>
 
+  </div>
 
+  <div class="attendance-status" id="attendanceStatus">
+    جارٍ تحميل نسب الحضور...
+  </div>
 
-          <div class="attendance-caption">نسبة حضور الطلبة اليوم</div>
-
-          <div class="attendance-status" id="attendanceStatus">
-
-            جارٍ تحميل النسبة...
-
-          </div>
-
-
-
-        </article>
+</article>
 
 
 
@@ -2809,6 +2872,104 @@ function getOmanToday() {
 
 
 async function refreshAttendanceRate() {
+
+  const studentRateElement =
+    document.getElementById("attendanceRate");
+
+  const teacherRateElement =
+    document.getElementById("teacherAttendanceRate");
+
+  const studentRing =
+    document.getElementById("attendanceRing");
+
+  const teacherRing =
+    document.getElementById("teacherAttendanceRing");
+
+  const statusElement =
+    document.getElementById("attendanceStatus");
+
+  function updateRing(rateElement, ringElement, rawValue) {
+
+    if (rawValue === null || rawValue === undefined || rawValue === "") {
+      rateElement.textContent = "--%";
+      ringElement.style.background =
+        "conic-gradient(var(--teal) 0 0%,#e1f2ed 0% 100%)";
+      return;
+    }
+
+    const value = Number(rawValue);
+
+    if (!Number.isFinite(value) || value < 0 || value > 100) {
+      rateElement.textContent = "--%";
+      ringElement.style.background =
+        "conic-gradient(var(--teal) 0 0%,#e1f2ed 0% 100%)";
+      return;
+    }
+
+    const displayedValue = Number.isInteger(value)
+      ? value.toString()
+      : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+
+    rateElement.textContent = displayedValue + "%";
+
+    ringElement.style.background =
+      `conic-gradient(var(--teal) 0 ${value}%,#e1f2ed ${value}% 100%)`;
+  }
+
+  try {
+
+    const today = getOmanToday();
+
+    const { data, error } = await attendanceClient
+      .from("daily_attendance_summary")
+      .select("attendance_rate, teacher_attendance_rate")
+      .eq("attendance_date", today)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Attendance Error:", error);
+      statusElement.textContent = "تعذر تحميل نسب الحضور";
+      return;
+    }
+
+    if (!data) {
+
+      updateRing(studentRateElement, studentRing, null);
+      updateRing(teacherRateElement, teacherRing, null);
+
+      statusElement.textContent =
+        "لم تُسجل نسب الحضور لهذا اليوم";
+
+      return;
+    }
+
+    updateRing(
+      studentRateElement,
+      studentRing,
+      data.attendance_rate
+    );
+
+    updateRing(
+      teacherRateElement,
+      teacherRing,
+      data.teacher_attendance_rate
+    );
+
+    statusElement.textContent =
+      "آخر تحديث: " +
+      new Intl.DateTimeFormat("ar-OM", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Asia/Muscat"
+      }).format(new Date());
+
+  } catch (error) {
+
+    console.error("Attendance Display Error:", error);
+
+    statusElement.textContent = "تعذر عرض نسب الحضور";
+  }
+}
 
 
 
