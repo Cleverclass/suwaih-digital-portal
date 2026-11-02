@@ -59,6 +59,60 @@ button:disabled{opacity:.6;cursor:not-allowed}
 .achievement-form-grid .full{grid-column:auto}
 .card{padding:16px}
 }
+/* إدارة الجدول الأسبوعي */
+.schedule-toolbar{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.schedule-day{
+  border:1px solid #dce6f4;
+  border-radius:14px;
+  padding:15px;
+  margin-top:14px;
+  background:#f9fbff;
+}
+.schedule-period{
+  display:grid;
+  grid-template-columns:1.5fr 1fr 1fr auto;
+  gap:9px;
+  align-items:end;
+  padding:12px;
+  margin-top:10px;
+  border:1px solid #e1e9f4;
+  border-radius:12px;
+  background:white;
+}
+.schedule-period label{
+  margin:0 0 6px;
+}
+.schedule-period button{
+  height:43px;
+}
+.schedule-note{
+  color:#647b99;
+  font-size:13px;
+  line-height:1.8;
+}
+.schedule-status{
+  white-space:pre-wrap;
+  font-size:14px;
+  margin-top:12px;
+  color:#315ca8;
+}
+.schedule-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:16px;
+}
+@media(max-width:650px){
+  .schedule-toolbar{grid-template-columns:1fr}
+  .schedule-period{grid-template-columns:1fr 1fr}
+  .schedule-period .period-subject{grid-column:1/-1}
+  .schedule-period button{grid-column:1/-1}
+}
+
 </style>
 </head>
 
@@ -223,6 +277,64 @@ placeholder="مثال: 98.50">
 <div class="card">
 <h2>الإنجازات المسجلة</h2>
 <div id="achievementsList" class="grid"></div>
+</div>
+<!-- إدارة الجدول الأسبوعي -->
+<div class="card" id="weeklyScheduleCard">
+  <h2>إدارة الجدول الأسبوعي</h2>
+
+  <p class="schedule-note">
+    أدخلي حصص الأسبوع وأوقاتها، ثم احفظي المسودة أو اعتمدي الجدول.
+    يوم الثلاثاء مخصص لجدول النشاط بصورة مستقلة.
+  </p>
+
+  <div class="schedule-toolbar">
+    <div>
+      <label for="scheduleWeekStart">بداية الأسبوع (الأحد)</label>
+      <input id="scheduleWeekStart" type="date">
+    </div>
+
+    <div>
+      <label for="scheduleDay">اليوم المراد تعديله</label>
+      <select id="scheduleDay">
+        <option value="sunday">الأحد</option>
+        <option value="monday">الاثنين</option>
+        <option value="tuesday">الثلاثاء – يوم النشاط</option>
+        <option value="wednesday">الأربعاء</option>
+        <option value="thursday">الخميس</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="schedule-day">
+    <h3 id="scheduleDayTitle">حصص يوم الأحد</h3>
+    <p class="schedule-note">
+      أضيفي الحصص بالترتيب، وحددي وقت البداية والنهاية لكل حصة.
+    </p>
+
+    <div id="schedulePeriods"></div>
+
+    <div class="schedule-actions">
+      <button class="secondary" type="button" id="addSchedulePeriodBtn">
+        + إضافة حصة
+      </button>
+    </div>
+  </div>
+
+  <div class="schedule-actions">
+    <button class="secondary" type="button" id="saveScheduleDraftBtn">
+      حفظ المسودة
+    </button>
+
+    <button class="primary" type="button" id="publishScheduleBtn">
+      اعتماد ونشر الجدول
+    </button>
+
+    <button class="secondary" type="button" id="loadPublishedScheduleBtn">
+      تحميل الجدول المعتمد
+    </button>
+  </div>
+
+  <p class="schedule-status" id="scheduleStatus" role="status"></p>
 </div>
 
 <!-- إدارة المواقع -->
@@ -1164,7 +1276,431 @@ setMessage("حدث خطأ أثناء تحميل المواقع.");
 console.error(error);
 }
 }
+// =====================================
+// إدارة الجدول الأسبوعي
+// =====================================
 
+const SCHEDULE_DRAFT_PREFIX = "suwaih_weekly_schedule_draft_";
+
+const SCHEDULE_DAYS = {
+  sunday: "الأحد",
+  monday: "الاثنين",
+  tuesday: "الثلاثاء – يوم النشاط",
+  wednesday: "الأربعاء",
+  thursday: "الخميس"
+};
+
+let weeklySchedule = {
+  sunday: [],
+  monday: [],
+  tuesday: [],
+  wednesday: [],
+  thursday: []
+};
+
+function getScheduleWeekStart(){
+  const value = $("scheduleWeekStart").value;
+  if(!value) return null;
+
+  const date = new Date(value + "T00:00:00Z");
+
+  if(date.getUTCDay() !== 0){
+    return null;
+  }
+
+  return value;
+}
+
+function getCurrentSunday(){
+  const today = getOmanDate();
+  const date = new Date(today + "T00:00:00Z");
+
+  date.setUTCDate(date.getUTCDate() - date.getUTCDay());
+
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth()+1).padStart(2,"0"),
+    String(date.getUTCDate()).padStart(2,"0")
+  ].join("-");
+}
+
+function emptyWeeklySchedule(){
+  return {
+    sunday: [],
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: []
+  };
+}
+
+function normalizeWeeklySchedule(data){
+  const result = emptyWeeklySchedule();
+
+  if(!data || typeof data !== "object") return result;
+
+  Object.keys(SCHEDULE_DAYS).forEach(day=>{
+    if(Array.isArray(data[day])){
+      result[day] = data[day].map(period=>({
+        subject:String(period.subject || ""),
+        start:String(period.start || ""),
+        end:String(period.end || "")
+      }));
+    }
+  });
+
+  return result;
+}
+
+function collectScheduleDay(){
+  const day = $("scheduleDay").value;
+  const rows = $("schedulePeriods").querySelectorAll(".schedule-period");
+
+  weeklySchedule[day] = Array.from(rows).map(row=>({
+    subject:row.querySelector(".period-subject").value.trim(),
+    start:row.querySelector(".period-start").value,
+    end:row.querySelector(".period-end").value
+  }));
+}
+
+function renderScheduleDay(){
+  const day = $("scheduleDay").value;
+  const container = $("schedulePeriods");
+
+  $("scheduleDayTitle").textContent =
+    "حصص " + SCHEDULE_DAYS[day];
+
+  container.replaceChildren();
+
+  const periods = weeklySchedule[day] || [];
+
+  if(periods.length === 0){
+    const empty = document.createElement("p");
+    empty.className = "schedule-note";
+    empty.textContent = "لم تتم إضافة حصص لهذا اليوم بعد.";
+    container.appendChild(empty);
+  }
+
+  periods.forEach((period,index)=>{
+    const row = document.createElement("div");
+    row.className = "schedule-period";
+
+    const subjectWrap = document.createElement("div");
+    subjectWrap.className = "period-subject-wrap";
+
+    const subjectLabel = document.createElement("label");
+    subjectLabel.textContent = "اسم الحصة";
+
+    const subject = document.createElement("input");
+    subject.className = "period-subject";
+    subject.type = "text";
+    subject.maxLength = 100;
+    subject.placeholder = "مثال: الرياضيات";
+    subject.value = period.subject || "";
+
+    subjectWrap.append(subjectLabel,subject);
+
+    const startWrap = document.createElement("div");
+    const startLabel = document.createElement("label");
+    startLabel.textContent = "من الساعة";
+
+    const start = document.createElement("input");
+    start.className = "period-start";
+    start.type = "time";
+    start.value = period.start || "";
+
+    startWrap.append(startLabel,start);
+
+    const endWrap = document.createElement("div");
+    const endLabel = document.createElement("label");
+    endLabel.textContent = "إلى الساعة";
+
+    const end = document.createElement("input");
+    end.className = "period-end";
+    end.type = "time";
+    end.value = period.end || "";
+
+    endWrap.append(endLabel,end);
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "danger";
+    remove.textContent = "حذف";
+
+    remove.addEventListener("click",()=>{
+      collectScheduleDay();
+      weeklySchedule[day].splice(index,1);
+      renderScheduleDay();
+    });
+
+    row.append(subjectWrap,startWrap,endWrap,remove);
+    container.appendChild(row);
+  });
+}
+
+function addSchedulePeriod(){
+  collectScheduleDay();
+
+  const day = $("scheduleDay").value;
+
+  weeklySchedule[day].push({
+    subject:"",
+    start:"",
+    end:""
+  });
+
+  renderScheduleDay();
+}
+
+function validateWeeklySchedule(){
+  collectScheduleDay();
+
+  const dayNames = Object.keys(SCHEDULE_DAYS);
+
+  for(const day of dayNames){
+    const periods = weeklySchedule[day];
+
+    for(let i=0;i<periods.length;i++){
+      const period = periods[i];
+
+      if(!period.subject || !period.start || !period.end){
+        return "أكملي اسم الحصة ووقت البداية والنهاية في يوم " +
+          SCHEDULE_DAYS[day] + ".";
+      }
+
+      if(period.start >= period.end){
+        return "وقت نهاية الحصة يجب أن يكون بعد وقت بدايتها في يوم " +
+          SCHEDULE_DAYS[day] + ".";
+      }
+
+      if(i > 0 && period.start < periods[i-1].end){
+        return "يوجد تداخل في أوقات الحصص يوم " +
+          SCHEDULE_DAYS[day] + ". رتبي الأوقات دون تداخل.";
+      }
+    }
+  }
+
+  return null;
+}
+
+function setScheduleMessage(message){
+  $("scheduleStatus").textContent = message;
+}
+
+function saveScheduleDraft(){
+  const weekStart = getScheduleWeekStart();
+
+  if(!weekStart){
+    setScheduleMessage("اختاري تاريخ يوم الأحد لبداية الأسبوع.");
+    return;
+  }
+
+  collectScheduleDay();
+
+  const draft = {
+    week_start:weekStart,
+    schedule:weeklySchedule,
+    saved_at:new Date().toISOString()
+  };
+
+  try{
+    localStorage.setItem(
+      SCHEDULE_DRAFT_PREFIX + weekStart,
+      JSON.stringify(draft)
+    );
+
+    setScheduleMessage(
+      "تم حفظ المسودة على هذا الجهاز بنجاح. لم يتم نشرها للزوار."
+    );
+  }catch(error){
+    setScheduleMessage("تعذر حفظ المسودة على هذا الجهاز.");
+    console.error(error);
+  }
+}
+
+function loadScheduleDraft(){
+  const weekStart = getScheduleWeekStart();
+
+  if(!weekStart){
+    setScheduleMessage("اختاري تاريخ يوم الأحد لبداية الأسبوع.");
+    return;
+  }
+
+  try{
+    const saved = localStorage.getItem(
+      SCHEDULE_DRAFT_PREFIX + weekStart
+    );
+
+    if(!saved){
+      weeklySchedule = emptyWeeklySchedule();
+      renderScheduleDay();
+      setScheduleMessage("لا توجد مسودة محفوظة لهذا الأسبوع.");
+      return;
+    }
+
+    const parsed = JSON.parse(saved);
+
+    weeklySchedule = normalizeWeeklySchedule(parsed.schedule);
+    renderScheduleDay();
+
+    setScheduleMessage("تم تحميل المسودة المحفوظة على هذا الجهاز.");
+  }catch(error){
+    setScheduleMessage("تعذر قراءة المسودة المحفوظة.");
+    console.error(error);
+  }
+}
+
+async function loadPublishedSchedule(){
+  if(!currentUser) return;
+
+  const weekStart = getScheduleWeekStart();
+
+  if(!weekStart){
+    setScheduleMessage("اختاري تاريخ يوم الأحد لبداية الأسبوع.");
+    return;
+  }
+
+  setScheduleMessage("جارٍ تحميل الجدول المعتمد...");
+
+  try{
+    const {data,error} = await db
+      .from("weekly_class_schedules")
+      .select("week_start,schedule,is_published")
+      .eq("week_start",weekStart)
+      .eq("is_published",true)
+      .maybeSingle();
+
+    if(error){
+      setScheduleMessage("تعذر تحميل الجدول: " + error.message);
+      console.error(error);
+      return;
+    }
+
+    if(!data){
+      setScheduleMessage("لا يوجد جدول معتمد لهذا الأسبوع.");
+      return;
+    }
+
+    weeklySchedule = normalizeWeeklySchedule(data.schedule);
+    renderScheduleDay();
+
+    setScheduleMessage("تم تحميل الجدول المعتمد للأسبوع المحدد.");
+  }catch(error){
+    setScheduleMessage("حدث خطأ أثناء تحميل الجدول.");
+    console.error(error);
+  }
+}
+
+async function publishWeeklySchedule(){
+  if(!currentUser) return;
+
+  const weekStart = getScheduleWeekStart();
+
+  if(!weekStart){
+    setScheduleMessage("اختاري تاريخ يوم الأحد لبداية الأسبوع.");
+    return;
+  }
+
+  const validationError = validateWeeklySchedule();
+
+  if(validationError){
+    setScheduleMessage(validationError);
+    return;
+  }
+
+  const hasPeriods = Object.values(weeklySchedule)
+    .some(periods=>periods.length > 0);
+
+  if(!hasPeriods){
+    setScheduleMessage("أضيفي حصة واحدة على الأقل قبل اعتماد الجدول.");
+    return;
+  }
+
+  const confirmed = confirm(
+    "هل تريدين اعتماد ونشر جدول الأسبوع الذي يبدأ بتاريخ " +
+    weekStart + "؟"
+  );
+
+  if(!confirmed) return;
+
+  const button = $("publishScheduleBtn");
+  button.disabled = true;
+  setScheduleMessage("جارٍ اعتماد الجدول ونشره...");
+
+  try{
+    const {error} = await db
+      .from("weekly_class_schedules")
+      .upsert({
+        week_start:weekStart,
+        schedule:weeklySchedule,
+        is_published:true,
+        updated_at:new Date().toISOString(),
+        updated_by:currentUser.id
+      },{
+        onConflict:"week_start"
+      });
+
+    if(error){
+      setScheduleMessage("تعذر اعتماد الجدول: " + error.message);
+      console.error(error);
+      return;
+    }
+
+    localStorage.removeItem(SCHEDULE_DRAFT_PREFIX + weekStart);
+
+    setScheduleMessage(
+      "تم اعتماد الجدول ونشره بنجاح للأسبوع الذي يبدأ " +
+      weekStart + "."
+    );
+
+  }catch(error){
+    setScheduleMessage("حدث خطأ أثناء اعتماد الجدول.");
+    console.error(error);
+  }finally{
+    button.disabled = false;
+  }
+}
+
+// أحداث التحكم بالجدول
+
+$("addSchedulePeriodBtn").addEventListener(
+  "click",
+  addSchedulePeriod
+);
+
+$("scheduleDay").addEventListener("change",()=>{
+  collectScheduleDay();
+  renderScheduleDay();
+});
+
+$("saveScheduleDraftBtn").addEventListener(
+  "click",
+  saveScheduleDraft
+);
+
+$("publishScheduleBtn").addEventListener(
+  "click",
+  publishWeeklySchedule
+);
+
+$("loadPublishedScheduleBtn").addEventListener(
+  "click",
+  loadPublishedSchedule
+);
+
+$("scheduleWeekStart").addEventListener("change",()=>{
+  weeklySchedule = emptyWeeklySchedule();
+  loadScheduleDraft();
+});
+
+// تهيئة الجدول عند فتح لوحة الإدارة
+
+function initializeWeeklySchedule(){
+  $("scheduleWeekStart").value = getCurrentSunday();
+  weeklySchedule = emptyWeeklySchedule();
+  $("scheduleDay").value = "sunday";
+  loadScheduleDraft();
+}
 // =====================================
 // تسجيل الدخول
 // =====================================
@@ -1220,7 +1756,7 @@ $("adminPanel").classList.remove("hidden");
 setLoginMessage("");
 
 resetAchievementForm();
-
+initializeWeeklySchedule();
 await Promise.all([
 loadSites(),
 loadAttendance(),
@@ -1379,7 +1915,7 @@ $("loginPanel").classList.add("hidden");
 $("adminPanel").classList.remove("hidden");
 
 resetAchievementForm();
-
+initializeWeeklySchedule();
 await Promise.all([
 loadSites(),
 loadAttendance(),
