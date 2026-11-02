@@ -1395,7 +1395,7 @@ function renderScheduleDay(){
     subject.className = "period-subject";
     subject.type = "text";
     subject.maxLength = 100;
-    subject.placeholder = "مثال: الرياضيات";
+    subject.placeholder = "مثال: الأولى";
     subject.value = period.subject || "";
 
     subjectWrap.append(subjectLabel,subject);
@@ -1473,7 +1473,6 @@ function timeToMinutes(value) {
 
   return hours * 60 + minutes;
 }
-
 function validateWeeklySchedule() {
   collectScheduleDay();
 
@@ -1506,9 +1505,7 @@ function validateWeeklySchedule() {
       if (endMinutes <= startMinutes) {
         return "وقت نهاية الحصة رقم " + (i + 1) +
           " يجب أن يكون بعد بدايتها في يوم " +
-          SCHEDULE_DAYS[day] +
-          ". البداية: " + period.start +
-          "، النهاية: " + period.end + ".";
+          SCHEDULE_DAYS[day] + ".";
       }
 
       if (
@@ -1526,21 +1523,6 @@ function validateWeeklySchedule() {
   return null;
 }
 
-
-      if(period.start >= period.end){
-        return "وقت نهاية الحصة يجب أن يكون بعد وقت بدايتها في يوم " +
-          SCHEDULE_DAYS[day] + ".";
-      }
-
-      if(i > 0 && period.start < periods[i-1].end){
-        return "يوجد تداخل في أوقات الحصص يوم " +
-          SCHEDULE_DAYS[day] + ". رتبي الأوقات دون تداخل.";
-      }
-    }
-  }
-
-  return null;
-}
 
 function setScheduleMessage(message){
   $("scheduleStatus").textContent = message;
