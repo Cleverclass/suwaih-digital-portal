@@ -2870,7 +2870,6 @@ function getOmanToday() {
    ========================================= */
 
 
-
 async function refreshAttendanceRate() {
 
   const studentRateElement =
@@ -2890,19 +2889,38 @@ async function refreshAttendanceRate() {
 
   function updateRing(rateElement, ringElement, rawValue) {
 
-    if (rawValue === null || rawValue === undefined || rawValue === "") {
+    if (
+      !rateElement ||
+      !ringElement
+    ) {
+      return;
+    }
+
+    if (
+      rawValue === null ||
+      rawValue === undefined ||
+      rawValue === ""
+    ) {
       rateElement.textContent = "--%";
+
       ringElement.style.background =
-        "conic-gradient(var(--teal) 0 0%,#e1f2ed 0% 100%)";
+        "conic-gradient(var(--teal) 0 0%, #e1f2ed 0% 100%)";
+
       return;
     }
 
     const value = Number(rawValue);
 
-    if (!Number.isFinite(value) || value < 0 || value > 100) {
+    if (
+      !Number.isFinite(value) ||
+      value < 0 ||
+      value > 100
+    ) {
       rateElement.textContent = "--%";
+
       ringElement.style.background =
-        "conic-gradient(var(--teal) 0 0%,#e1f2ed 0% 100%)";
+        "conic-gradient(var(--teal) 0 0%, #e1f2ed 0% 100%)";
+
       return;
     }
 
@@ -2913,7 +2931,7 @@ async function refreshAttendanceRate() {
     rateElement.textContent = displayedValue + "%";
 
     ringElement.style.background =
-      `conic-gradient(var(--teal) 0 ${value}%,#e1f2ed ${value}% 100%)`;
+      `conic-gradient(var(--teal) 0 ${value}%, #e1f2ed ${value}% 100%)`;
   }
 
   try {
@@ -2927,185 +2945,77 @@ async function refreshAttendanceRate() {
       .maybeSingle();
 
     if (error) {
+
       console.error("Attendance Error:", error);
-      statusElement.textContent = "تعذر تحميل نسب الحضور";
+
+      if (statusElement) {
+        statusElement.textContent =
+          "تعذر تحميل نسب الحضور";
+      }
+
       return;
     }
 
     if (!data) {
 
-      updateRing(studentRateElement, studentRing, null);
-      updateRing(teacherRateElement, teacherRing, null);
+      updateRing(
+        studentRateElement,
+        studentRing,
+        null
+      );
 
-      statusElement.textContent =
-        "لم تُسجل نسب الحضور لهذا اليوم";
+      updateRing(
+        teacherRateElement,
+        teacherRing,
+        null
+      );
+
+      if (statusElement) {
+        statusElement.textContent =
+          "لم تُسجل نسب الحضور لهذا اليوم";
+      }
 
       return;
     }
 
+    // نسبة حضور الطلبة
     updateRing(
       studentRateElement,
       studentRing,
       data.attendance_rate
     );
 
+    // نسبة حضور المعلمين
     updateRing(
       teacherRateElement,
       teacherRing,
       data.teacher_attendance_rate
     );
 
-    statusElement.textContent =
-      "آخر تحديث: " +
-      new Intl.DateTimeFormat("ar-OM", {
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "Asia/Muscat"
-      }).format(new Date());
-
-  } catch (error) {
-
-    console.error("Attendance Display Error:", error);
-
-    statusElement.textContent = "تعذر عرض نسب الحضور";
-  }
-}
-
-
-
-  const rateElement =
-
-    document.getElementById("attendanceRate");
-
-
-
-  const ringElement =
-
-    document.getElementById("attendanceRing");
-
-
-
-  const statusElement =
-
-    document.getElementById("attendanceStatus");
-
-
-
-  try {
-
-
-
-    const today = getOmanToday();
-
-
-
-    const { data, error } = await attendanceClient
-
-      .from("daily_attendance_summary")
-
-      .select("attendance_rate")
-
-      .eq("attendance_date", today)
-
-      .maybeSingle();
-
-
-
-    if (error) {
-
-      console.error("Attendance Error:", error);
-
-      statusElement.textContent = "تعذر تحميل نسبة الحضور";
-
-      return;
-
-    }
-
-
-
-    if (!data) {
-
-      rateElement.textContent = "--%";
-
-
-
-      ringElement.style.background =
-
-        "conic-gradient(var(--teal) 0 0%,#e1f2ed 0% 100%)";
-
-
+    if (statusElement) {
 
       statusElement.textContent =
-
-        "لم تُسجل نسبة حضور لهذا اليوم";
-
-
-
-      return;
-
-    }
-
-
-
-    const value = Number(data.attendance_rate);
-
-
-
-    if (!Number.isFinite(value) || value < 0 || value > 100) {
-
-      throw new Error("قيمة نسبة الحضور غير صحيحة");
+        "آخر تحديث: " +
+        new Intl.DateTimeFormat("ar-OM", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Asia/Muscat"
+        }).format(new Date());
 
     }
-
-
-
-    const displayedValue = Number.isInteger(value)
-
-      ? value.toString()
-
-      : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
-
-
-
-    rateElement.textContent = displayedValue + "%";
-
-
-
-    ringElement.style.background =
-
-      `conic-gradient(var(--teal) 0 ${value}%,#e1f2ed ${value}% 100%)`;
-
-
-
-    statusElement.textContent =
-
-      "آخر تحديث: " +
-
-      new Intl.DateTimeFormat("ar-OM", {
-
-        hour: "2-digit",
-
-        minute: "2-digit",
-
-        timeZone: "Asia/Muscat"
-
-      }).format(new Date());
-
-
 
   } catch (error) {
 
-
-
     console.error("Attendance Display Error:", error);
 
-    statusElement.textContent = "تعذر عرض نسبة الحضور";
+    if (statusElement) {
+      statusElement.textContent =
+        "تعذر عرض نسب الحضور";
+    }
 
   }
 
 }
-
-
 
 /* =========================================
 
