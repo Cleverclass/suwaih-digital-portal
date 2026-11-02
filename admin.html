@@ -1277,7 +1277,9 @@ console.error(error);
 }
 }
 // =====================================
-// إدارة الجدول الأسبوعي
+
+// =====================================
+// إدارة الجدول الأسبوعي - نسخة مصححة
 // =====================================
 
 const SCHEDULE_DRAFT_PREFIX = "suwaih_weekly_schedule_draft_";
@@ -1290,13 +1292,20 @@ const SCHEDULE_DAYS = {
   thursday: "الخميس"
 };
 
-let weeklySchedule = {
-  sunday: [],
-  monday: [],
-  tuesday: [],
-  wednesday: [],
-  thursday: []
-};
+function emptyWeeklySchedule(){
+  return {
+    sunday: [],
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: []
+  };
+}
+
+let weeklySchedule = emptyWeeklySchedule();
+
+// نتذكر اليوم الذي تظهر حصصه حاليًا
+let displayedScheduleDay = "sunday";
 
 function getScheduleWeekStart(){
   const value = $("scheduleWeekStart").value;
@@ -1304,9 +1313,7 @@ function getScheduleWeekStart(){
 
   const date = new Date(value + "T00:00:00Z");
 
-  if(date.getUTCDay() !== 0){
-    return null;
-  }
+  if(date.getUTCDay() !== 0) return null;
 
   return value;
 }
@@ -1324,16 +1331,7 @@ function getCurrentSunday(){
   ].join("-");
 }
 
-function emptyWeeklySchedule(){
-  return {
-    sunday: [],
-    monday: [],
-    tuesday: [],
-    wednesday: [],
-    thursday: []
-  };
-}
-
+// إنشاء نسخة مستقلة من بيانات كل يوم
 function normalizeWeeklySchedule(data){
   const result = emptyWeeklySchedule();
 
@@ -1352,9 +1350,12 @@ function normalizeWeeklySchedule(data){
   return result;
 }
 
-function collectScheduleDay(){
-  const day = $("scheduleDay").value;
-  const rows = $("schedulePeriods").querySelectorAll(".schedule-period");
+// حفظ الحصص في اليوم المحدد صراحةً
+function collectScheduleDay(day = displayedScheduleDay){
+  if(!SCHEDULE_DAYS[day]) return;
+
+  const rows = $("schedulePeriods")
+    .querySelectorAll(".schedule-period");
 
   weeklySchedule[day] = Array.from(rows).map(row=>({
     subject:row.querySelector(".period-subject").value.trim(),
@@ -1363,8 +1364,12 @@ function collectScheduleDay(){
   }));
 }
 
+// عرض حصص اليوم المختار
 function renderScheduleDay(){
   const day = $("scheduleDay").value;
+
+  displayedScheduleDay = day;
+
   const container = $("schedulePeriods");
 
   $("scheduleDayTitle").textContent =
@@ -1395,7 +1400,7 @@ function renderScheduleDay(){
     subject.className = "period-subject";
     subject.type = "text";
     subject.maxLength = 100;
-    subject.placeholder = "مثال: الأولى";
+    subject.placeholder = "مثال: الحصة الأولى";
     subject.value = period.subject || "";
 
     subjectWrap.append(subjectLabel,subject);
@@ -1428,7 +1433,7 @@ function renderScheduleDay(){
     remove.textContent = "حذف";
 
     remove.addEventListener("click",()=>{
-      collectScheduleDay();
+      collectScheduleDay(day);
       weeklySchedule[day].splice(index,1);
       renderScheduleDay();
     });
@@ -1438,10 +1443,11 @@ function renderScheduleDay(){
   });
 }
 
+// إضافة حصة لليوم الحالي فقط
 function addSchedulePeriod(){
-  collectScheduleDay();
+  collectScheduleDay(displayedScheduleDay);
 
-  const day = $("scheduleDay").value;
+  const day = displayedScheduleDay;
 
   weeklySchedule[day].push({
     subject:"",
@@ -1452,70 +1458,75 @@ function addSchedulePeriod(){
   renderScheduleDay();
 }
 
-function timeToMinutes(value) {
-  if (!value) return NaN;
+// تحويل الوقت إلى دقائق
+function timeToMinutes(value){
+  if(!value) return NaN;
 
   const parts = value.split(":");
 
-  if (parts.length < 2) return NaN;
+  if(parts.length !== 2) return NaN;
 
   const hours = Number(parts[0]);
   const minutes = Number(parts[1]);
 
-  if (
+  if(
     !Number.isInteger(hours) ||
     !Number.isInteger(minutes) ||
     hours < 0 || hours > 23 ||
     minutes < 0 || minutes > 59
-  ) {
+  ){
     return NaN;
   }
 
   return hours * 60 + minutes;
 }
-function validateWeeklySchedule() {
-  collectScheduleDay();
 
-  const dayNames = Object.keys(SCHEDULE_DAYS);
+// التحقق من جميع أيام الأسبوع
+function validateWeeklySchedule(){
+  collectScheduleDay(displayedScheduleDay);
 
-  for (const day of dayNames) {
+  for(const day of Object.keys(SCHEDULE_DAYS)){
     const periods = weeklySchedule[day];
 
-    for (let i = 0; i < periods.length; i++) {
+    for(let i=0; i<periods.length; i++){
       const period = periods[i];
 
-      if (!period.subject || !period.start || !period.end) {
+      if(!period.subject || !period.start || !period.end){
         return "أكملي اسم الحصة ووقت البداية والنهاية في يوم " +
           SCHEDULE_DAYS[day] +
-          "، الحصة رقم " + (i + 1) + ".";
+          "، الحصة رقم " + (i+1) + ".";
       }
 
       const startMinutes = timeToMinutes(period.start);
       const endMinutes = timeToMinutes(period.end);
 
-      if (
+      if(
         !Number.isFinite(startMinutes) ||
         !Number.isFinite(endMinutes)
-      ) {
+      ){
         return "تحققي من صيغة الوقت في يوم " +
           SCHEDULE_DAYS[day] +
-          "، الحصة رقم " + (i + 1) + ".";
+          "، الحصة رقم " + (i+1) + ".";
       }
 
-      if (endMinutes <= startMinutes) {
-        return "وقت نهاية الحصة رقم " + (i + 1) +
+      if(endMinutes <= startMinutes){
+        return "وقت نهاية الحصة رقم " + (i+1) +
           " يجب أن يكون بعد بدايتها في يوم " +
           SCHEDULE_DAYS[day] + ".";
       }
 
-      if (
-        i > 0 &&
-        startMinutes < timeToMinutes(periods[i - 1].end)
-      ) {
-        return "يوجد تداخل في أوقات الحصص يوم " +
-          SCHEDULE_DAYS[day] +
-          "، عند الحصة رقم " + (i + 1) +
-          ". رتبي الأوقات دون تداخل.";
+      if(i > 0){
+        const previousEnd =
+          timeToMinutes(periods[i-1].end);
+
+        if(
+          !Number.isFinite(previousEnd) ||
+          startMinutes < previousEnd
+        ){
+          return "يوجد تداخل في أوقات الحصص يوم " +
+            SCHEDULE_DAYS[day] +
+            "، عند الحصة رقم " + (i+1) + ".";
+        }
       }
     }
   }
@@ -1523,11 +1534,11 @@ function validateWeeklySchedule() {
   return null;
 }
 
-
 function setScheduleMessage(message){
   $("scheduleStatus").textContent = message;
 }
 
+// حفظ المسودة على الجهاز
 function saveScheduleDraft(){
   const weekStart = getScheduleWeekStart();
 
@@ -1536,11 +1547,11 @@ function saveScheduleDraft(){
     return;
   }
 
-  collectScheduleDay();
+  collectScheduleDay(displayedScheduleDay);
 
   const draft = {
     week_start:weekStart,
-    schedule:weeklySchedule,
+    schedule:normalizeWeeklySchedule(weeklySchedule),
     saved_at:new Date().toISOString()
   };
 
@@ -1559,6 +1570,7 @@ function saveScheduleDraft(){
   }
 }
 
+// تحميل المسودة
 function loadScheduleDraft(){
   const weekStart = getScheduleWeekStart();
 
@@ -1582,6 +1594,7 @@ function loadScheduleDraft(){
     const parsed = JSON.parse(saved);
 
     weeklySchedule = normalizeWeeklySchedule(parsed.schedule);
+
     renderScheduleDay();
 
     setScheduleMessage("تم تحميل المسودة المحفوظة على هذا الجهاز.");
@@ -1591,6 +1604,7 @@ function loadScheduleDraft(){
   }
 }
 
+// تحميل الجدول المعتمد من Supabase
 async function loadPublishedSchedule(){
   if(!currentUser) return;
 
@@ -1623,6 +1637,7 @@ async function loadPublishedSchedule(){
     }
 
     weeklySchedule = normalizeWeeklySchedule(data.schedule);
+
     renderScheduleDay();
 
     setScheduleMessage("تم تحميل الجدول المعتمد للأسبوع المحدد.");
@@ -1632,6 +1647,7 @@ async function loadPublishedSchedule(){
   }
 }
 
+// اعتماد ونشر الجدول
 async function publishWeeklySchedule(){
   if(!currentUser) return;
 
@@ -1666,14 +1682,18 @@ async function publishWeeklySchedule(){
 
   const button = $("publishScheduleBtn");
   button.disabled = true;
+
   setScheduleMessage("جارٍ اعتماد الجدول ونشره...");
 
   try{
+    const scheduleToPublish =
+      normalizeWeeklySchedule(weeklySchedule);
+
     const {error} = await db
       .from("weekly_class_schedules")
       .upsert({
         week_start:weekStart,
-        schedule:weeklySchedule,
+        schedule:scheduleToPublish,
         is_published:true,
         updated_at:new Date().toISOString(),
         updated_by:currentUser.id
@@ -1702,15 +1722,24 @@ async function publishWeeklySchedule(){
   }
 }
 
+// =====================================
 // أحداث التحكم بالجدول
+// =====================================
 
 $("addSchedulePeriodBtn").addEventListener(
   "click",
   addSchedulePeriod
 );
 
+// هذا هو الإصلاح الأساسي:
+// نحفظ اليوم السابق قبل عرض اليوم الجديد
 $("scheduleDay").addEventListener("change",()=>{
-  collectScheduleDay();
+  const previousDay = displayedScheduleDay;
+
+  collectScheduleDay(previousDay);
+
+  displayedScheduleDay = $("scheduleDay").value;
+
   renderScheduleDay();
 });
 
@@ -1729,19 +1758,27 @@ $("loadPublishedScheduleBtn").addEventListener(
   loadPublishedSchedule
 );
 
+// تغيير الأسبوع
 $("scheduleWeekStart").addEventListener("change",()=>{
   weeklySchedule = emptyWeeklySchedule();
+
+  displayedScheduleDay = $("scheduleDay").value;
+
   loadScheduleDraft();
 });
 
 // تهيئة الجدول عند فتح لوحة الإدارة
-
 function initializeWeeklySchedule(){
   $("scheduleWeekStart").value = getCurrentSunday();
+
   weeklySchedule = emptyWeeklySchedule();
+
   $("scheduleDay").value = "sunday";
+  displayedScheduleDay = "sunday";
+
   loadScheduleDraft();
 }
+
 // =====================================
 // تسجيل الدخول
 // =====================================
