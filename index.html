@@ -2469,9 +2469,12 @@ button{cursor:pointer}
         </button>
       </div>
       <div class="school-info-image-card">
-        <img src=school-info.png"
-             alt="إنفوجرافيك بيانات وإحصائيات مدرسة السويح"
-             loading="lazy">
+        <img
+    src="./school-info.png"
+    alt="إنفوجرافيك بيانات وإحصائيات مدرسة السويح"
+    loading="lazy"
+    onerror="this.alt='تعذر تحميل صورة بيانات المدرسة'; console.error('لم يتم العثور على school-info.png')"
+>
       </div>
     </section>
 
